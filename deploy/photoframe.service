@@ -1,0 +1,17 @@
+[Unit]
+Description=Photo frame server
+Wants=network-online.target
+After=network.target NetworkManager.service
+
+[Service]
+User=@USER@
+WorkingDirectory=@REPO@
+ExecStart=@REPO@/.venv/bin/python -m photoframe --data-dir @DATA@ --port 80
+# allows binding port 80 without running as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

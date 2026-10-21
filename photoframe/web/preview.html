@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frame preview</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; height: 100vh; display: flex; gap: 24px; padding: 16px; box-sizing: border-box;
+           background: #202327; color: #e6edf3; font: 14px system-ui, sans-serif; }
+    .device { flex: none; position: relative; height: calc(100vh - 32px); aspect-ratio: 800 / 1280;
+              border: 14px solid #0a0a0a; border-radius: 18px; box-shadow: 0 10px 40px #0008; overflow: hidden; background: #000; }
+    iframe { position: absolute; left: 0; top: 0; width: 800px; height: 1280px; border: 0; transform-origin: 0 0; }
+    #dim { position: absolute; inset: 0; background: #000; pointer-events: none; opacity: 0; transition: opacity .4s; }
+    .panel { max-width: 340px; display: flex; flex-direction: column; gap: 14px; }
+    h1 { font-size: 18px; margin: 0; }
+    p, li { color: #9aa4b2; line-height: 1.45; }
+    label { display: flex; flex-direction: column; gap: 6px; }
+    button { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid #444; background: #2d333b; color: inherit; cursor: pointer; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    code { color: #e6edf3; }
+    a { color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <div class="device" id="device">
+    <iframe id="frame" src="/frame" title="Frame"></iframe>
+    <div id="dim"></div>
+  </div>
+  <div class="panel">
+    <h1>Frame preview (simulated hardware)</h1>
+    <p>Shown at the real 800×1280 layout, scaled. Swipe with the mouse (drag left/right), long-press for the QR code,
+       or use <code>←</code> <code>→</code>, <code>q</code> (QR), <code>w</code> (Wi‑Fi) after clicking into the frame.</p>
+    <p><a href="/" target="_blank">Open the settings page</a></p>
+    <label>Simulated room light: <span id="lux-val">150 lux</span>
+      <input type="range" id="lux" min="0" max="1000" step="1" value="150">
+    </label>
+    <p id="bl">Backlight: –</p>
+    <div class="row">
+      <button type="button" data-wifi="drop">Drop Wi‑Fi</button>
+      <button type="button" data-wifi="forget">New frame (no Wi‑Fi saved)</button>
+      <button type="button" data-wifi="up">Reconnect</button>
+    </div>
+    <p>“Drop Wi‑Fi” keeps the slideshow running (the Wi‑Fi screen only appears if the daily sync finds no network).
+       “New frame” shows the setup screen right away. Any password with 8+ characters connects.</p>
+  </div>
+<script>
+  const frame = document.getElementById('frame');
+  const device = document.getElementById('device');
+  function fit() { frame.style.transform = `scale(${device.clientWidth / 800})`; }
+  new ResizeObserver(fit).observe(device);
+  const post = (p, b) => fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+  const lux = document.getElementById('lux');
+  lux.addEventListener('input', () => {
+    // slider is quadratic so low light values are easy to pick
+    const v = Math.round((lux.value / 1000) ** 2 * 1000 * 10) / 10;
+    document.getElementById('lux-val').textContent = v + ' lux';
+    post('/api/dev/lux', { lux: v });
+  });
+  document.querySelectorAll('[data-wifi]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.wifi;
+    post('/api/dev/wifi', { online: k === 'up', forget: k === 'forget' });
+  }));
+  setInterval(async () => {
+    try {
+      const r = await (await fetch('/api/dev/backlight')).json();
+      document.getElementById('bl').textContent = `Backlight: ${r.on ? Math.round(r.percent) + '%' : 'off'}`;
+      // approximate what the room sees: a dimmer backlight darkens the picture
+      document.getElementById('dim').style.opacity = r.on ? (1 - r.percent / 100) * 0.85 : 1;
+    } catch {}
+  }, 500);
+</script>
+</body>
+</html>

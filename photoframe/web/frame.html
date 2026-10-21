@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Photo frame</title>
+  <link rel="stylesheet" href="/static/frame.css">
+</head>
+<body>
+  <div id="stage">
+    <img class="slide" id="slideA" alt="">
+    <img class="slide" id="slideB" alt="">
+  </div>
+
+  <div id="empty" class="hidden">
+    <h1 id="empty-title">No photos yet</h1>
+    <p id="empty-text"></p>
+    <img class="qr-img" src="/api/qr.svg" alt="QR code for the settings page">
+    <p class="url" data-url></p>
+  </div>
+
+  <div id="overlay"></div>
+  <div id="offline" class="hidden" title="No network"></div>
+
+  <div id="qr" class="hidden">
+    <div class="qr-card">
+      <img class="qr-img" alt="QR code for the settings page">
+      <p>Scan to open the settings</p>
+      <p class="url" data-url></p>
+      <button type="button" id="qr-wifi">Wi‑Fi settings</button>
+    </div>
+  </div>
+
+  <div id="wifi" class="hidden">
+    <div class="wifi-panel">
+      <h1>Connect to Wi‑Fi</h1>
+      <p class="sub" id="wifi-sub">Choose your network</p>
+
+      <section id="wifi-list-view">
+        <div id="wifi-list"></div>
+        <div class="wifi-actions">
+          <button type="button" id="wifi-close">Back to photos</button>
+          <button type="button" id="wifi-rescan">Scan again</button>
+        </div>
+      </section>
+
+      <section id="wifi-pass-view" class="hidden">
+        <div class="wifi-ssid" id="wifi-ssid"></div>
+        <div class="pass-row">
+          <input id="wifi-pass" type="password" readonly autocomplete="off" placeholder="Password">
+          <button type="button" id="wifi-show">Show</button>
+        </div>
+        <div id="wifi-msg"></div>
+        <div id="keyboard"></div>
+        <div class="wifi-actions">
+          <button type="button" id="wifi-cancel">Cancel</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="blank" class="hidden"></div>
+
+  <script src="/static/icons.js"></script>
+  <script src="/static/keyboard.js"></script>
+  <script src="/static/frame.js"></script>
+</body>
+</html>

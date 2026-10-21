@@ -1,0 +1,9 @@
+// Lets the photo frame service manage Wi-Fi and restart the Pi without a password.
+polkit.addRule(function (action, subject) {
+  if (subject.user == "@USER@" &&
+      (action.id.indexOf("org.freedesktop.NetworkManager.") == 0 ||
+       action.id.indexOf("org.freedesktop.login1.reboot") == 0 ||
+       action.id.indexOf("org.freedesktop.login1.power-off") == 0)) {
+    return polkit.Result.YES;
+  }
+});

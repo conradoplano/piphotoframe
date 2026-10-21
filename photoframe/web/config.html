@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Photo frame settings</title>
+  <link rel="stylesheet" href="/static/config.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Photo frame</h1>
+    <span id="conn" class="pill">…</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" id="status">
+    <h2>Status</h2>
+    <dl class="stats">
+      <div><dt>Photos</dt><dd id="st-photos">–</dd></div>
+      <div><dt>Last sync</dt><dd id="st-last">–</dd></div>
+      <div><dt>Next sync</dt><dd id="st-next">–</dd></div>
+      <div><dt>Room light</dt><dd id="st-lux">–</dd></div>
+      <div><dt>Screen</dt><dd id="st-screen">–</dd></div>
+      <div><dt>Address</dt><dd id="st-url">–</dd></div>
+    </dl>
+    <p id="st-sync" class="note"></p>
+    <div class="row-actions">
+      <button type="button" id="sync-now">Sync now</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Albums</h2>
+    <p class="note">Paste a Synology Photos share link (in Synology Photos: album → Share → enable the public link).</p>
+    <div id="albums"></div>
+    <form id="album-add" class="add-row">
+      <input id="album-url" type="url" placeholder="https://nas.example.com:5001/mo/sharing/AbC123" required>
+      <button type="submit">Add</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Slideshow</h2>
+    <div class="grid">
+      <label>Show each photo for
+        <span class="combo">
+          <input id="dur-value" type="number" min="1" step="1">
+          <select id="dur-unit">
+            <option value="1">seconds</option>
+            <option value="60">minutes</option>
+            <option value="3600">hours</option>
+          </select>
+        </span>
+      </label>
+      <label>Order
+        <select data-path="order">
+          <option value="shuffle">Shuffle</option>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </label>
+      <label>Photos that don't fill the screen
+        <select data-path="fit_mode">
+          <option value="blur">Fit, blurred background</option>
+          <option value="cover">Crop to fill</option>
+          <option value="contain">Fit, black bars</option>
+        </select>
+      </label>
+      <label>Transition
+        <select data-path="transition">
+          <option value="fade">Cross-fade</option>
+          <option value="none">None</option>
+        </select>
+      </label>
+      <label>Daily album sync at
+        <input type="time" data-path="sync_time">
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Clock &amp; weather</h2>
+    <div class="segmented" role="radiogroup">
+      <label><input type="radio" name="wmode" value="forecast"> One city · 3-day forecast</label>
+      <label><input type="radio" name="wmode" value="multi"> Three cities · now</label>
+    </div>
+    <p class="note" id="cities-note"></p>
+    <ol id="cities"></ol>
+    <div class="search">
+      <input id="city-q" type="search" placeholder="Add a city…" autocomplete="off">
+      <ul id="city-results" class="hidden"></ul>
+    </div>
+    <div class="grid">
+      <label>Temperature
+        <select data-path="units">
+          <option value="C">°C</option>
+          <option value="F">°F</option>
+        </select>
+      </label>
+      <label>Language (dates)
+        <select data-path="language">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="it">Italiano</option>
+          <option value="pt">Português</option>
+          <option value="nl">Nederlands</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" data-path="clock_24h"> 24-hour clock</label>
+      <label class="check"><input type="checkbox" data-path="show_date"> Show date</label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Screen brightness</h2>
+    <label class="check"><input type="checkbox" data-path="brightness.auto"> Adjust to the room's light</label>
+    <div class="grid">
+      <label data-auto="1">Darkest room → <output data-for="brightness.min_pct"></output>
+        <input type="range" min="0" max="100" data-path="brightness.min_pct">
+      </label>
+      <label data-auto="1">Brightest room → <output data-for="brightness.max_pct"></output>
+        <input type="range" min="1" max="100" data-path="brightness.max_pct">
+      </label>
+      <label data-auto="0">Fixed brightness <output data-for="brightness.manual_pct"></output>
+        <input type="range" min="1" max="100" data-path="brightness.manual_pct">
+      </label>
+    </div>
+    <details>
+      <summary>Advanced</summary>
+      <div class="grid">
+        <label>"Dark" means at most (lux)
+          <input type="number" min="0.1" step="0.1" data-path="brightness.dark_lux">
+        </label>
+        <label>"Bright" means at least (lux)
+          <input type="number" min="1" step="1" data-path="brightness.bright_lux">
+        </label>
+        <label>Turn screen off below (lux, 0 = never)
+          <input type="number" min="0" step="0.1" data-path="brightness.off_below_lux">
+        </label>
+      </div>
+      <p class="note">Without a light sensor the fixed brightness is used.</p>
+    </details>
+    <h3>Night</h3>
+    <label class="check"><input type="checkbox" data-path="night.enabled"> Turn the screen off at night (a touch wakes it for a minute)</label>
+    <div class="grid">
+      <label>From <input type="time" data-path="night.start"></label>
+      <label>Until <input type="time" data-path="night.end"></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>System</h2>
+    <label class="check"><input type="checkbox" data-path="verify_tls"> Verify the NAS's HTTPS certificate</label>
+    <p class="note" id="sys-info"></p>
+    <div class="row-actions">
+      <button type="button" id="reboot" class="danger">Restart frame</button>
+    </div>
+  </section>
+</main>
+
+<footer class="savebar hidden" id="savebar">
+  <div class="wrap">
+    <span id="save-msg">Unsaved changes</span>
+    <button type="button" id="revert" class="ghost">Discard</button>
+    <button type="button" id="save" class="primary">Save</button>
+  </div>
+</footer>
+<div id="toast" class="hidden"></div>
+
+<template id="album-tpl">
+  <div class="album">
+    <div class="album-main">
+      <input class="a-name" placeholder="Name (optional)">
+      <input class="a-url" type="url">
+      <details class="a-more"><summary>Password</summary>
+        <input class="a-pass" type="password" placeholder="Only for password-protected shares" autocomplete="off">
+      </details>
+      <p class="a-status note"></p>
+    </div>
+    <div class="album-side">
+      <label class="check"><input type="checkbox" class="a-enabled"> On</label>
+      <button type="button" class="a-test ghost">Test</button>
+      <button type="button" class="a-del ghost" aria-label="Remove album">Remove</button>
+    </div>
+  </div>
+</template>
+
+<script src="/static/config.js"></script>
+</body>
+</html>
