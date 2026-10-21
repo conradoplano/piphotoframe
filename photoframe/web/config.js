@@ -252,7 +252,7 @@ async function refreshState() {
   line.textContent = sync.running ? (sync.progress || 'Syncing…') : (sync.last_error ? 'Last sync problem: ' + sync.last_error : '');
   line.className = 'note' + (!sync.running && sync.last_error ? ' bad' : '');
   $('#sync-now').disabled = sync.running;
-  $('#sys-info').textContent = `Version ${state.version} · ${state.hostname} · light sensor: ${state.sensor || 'none'}` +
+  $('#sys-info').textContent = `Version ${state.version}${state.build ? ' (' + state.build + ')' : ''} · ${state.hostname} · light sensor: ${state.sensor || 'none'}` +
     ` · backlight: ${state.backlight}${state.mock ? ' · simulated hardware' : ''}`;
   if (!document.activeElement || !document.activeElement.closest('#albums')) {
     $$('.album').forEach((node, i) => {
@@ -279,6 +279,77 @@ $('#sync-now').addEventListener('click', async () => {
 $('#reboot').addEventListener('click', async () => {
   if (!confirm('Restart the photo frame now?')) return;
   try { toast((await post('/api/system/reboot')).message); } catch (e) { toast(e.message); }
+});
+
+/* ---------- software update ---------- */
+
+function renderUpdate(u) {
+  const msg = $('#upd-msg');
+  const list = $('#upd-commits');
+  const install = $('#upd-install');
+  list.classList.add('hidden');
+  install.classList.add('hidden');
+  msg.className = 'note';
+  if (!u.available) {
+    msg.textContent = u.error || 'Updates are not available (not installed from git).';
+  } else if (u.running) {
+    msg.textContent = u.log.length ? u.log[u.log.length - 1] : 'Updating…';
+  } else if (u.error) {
+    msg.textContent = u.error;
+    msg.className = 'note bad';
+  } else if (!u.checked) {
+    msg.textContent = `Installed version: ${u.build}. Check GitHub for a newer one.`;
+  } else if (!u.behind) {
+    msg.textContent = `Up to date (${u.build}).`;
+    msg.className = 'note ok';
+  } else {
+    msg.textContent = `${u.behind} new change${u.behind > 1 ? 's' : ''} available (${u.build} → ${u.latest}):`;
+    list.innerHTML = u.commits.map((c) => {
+      const [hash, ...rest] = c.split(' ');
+      return `<li><code>${esc(hash)}</code>${esc(rest.join(' '))}</li>`;
+    }).join('');
+    list.classList.remove('hidden');
+    install.classList.toggle('hidden', !u.can_install);
+    if (!u.can_install) msg.textContent += ' (install on the frame itself — not in dev mode)';
+  }
+  $('#upd-check').disabled = u.running;
+  install.disabled = u.running;
+}
+
+$('#upd-check').addEventListener('click', async () => {
+  const btn = $('#upd-check');
+  btn.disabled = true;
+  $('#upd-msg').textContent = 'Checking…';
+  $('#upd-msg').className = 'note';
+  try { renderUpdate(await post('/api/update/check')); } catch (e) { toast(e.message); }
+  btn.disabled = false;
+});
+
+$('#upd-install').addEventListener('click', async () => {
+  if (!confirm('Install the update now? The frame restarts and is back in about a minute.')) return;
+  const before = state && state.build;
+  try { renderUpdate(await post('/api/update/install')); } catch (e) { toast(e.message); return; }
+  const started = Date.now();
+  const timer = setInterval(async () => {
+    try {
+      const st = await api('/api/state');
+      if (st.build && st.build !== before) {
+        clearInterval(timer);
+        toast(`Updated to ${st.build}`);
+        setTimeout(() => location.reload(), 1200);
+        return;
+      }
+      const u = await api('/api/update');
+      renderUpdate(u);
+      if (!u.running && u.error) clearInterval(timer);
+    } catch {
+      $('#upd-msg').textContent = 'Restarting…';
+    }
+    if (Date.now() - started > 5 * 60 * 1000) {
+      clearInterval(timer);
+      $('#upd-msg').textContent = 'The update is taking long — reload this page in a moment.';
+    }
+  }, 2000);
 });
 
 /* ---------- save ---------- */
@@ -323,5 +394,6 @@ function renderAll() {
   renderAll();
   await refreshState();
   renderAlbums();
+  api('/api/update').then(renderUpdate).catch(() => {});
   setInterval(refreshState, 4000);
 })();

@@ -49,7 +49,20 @@ Mount the sensor so it faces the room and doesn't pick up light from the screen,
    ```
 4. Open `http://photoframe.local/` (or the address shown on the frame) and add your albums and cities.
 
-To update later, run `./deploy/update.sh` on the Pi. It pulls the latest code, reinstalls the dependencies and restarts the services.
+### Updating
+
+On the settings page, go to **System → Check for updates**, then **Install update**. The frame:
+1. pulls the latest commit from GitHub (`git pull --ff-only`)
+2. updates the Python packages
+3. restarts itself; systemd brings it back within seconds
+
+The frame screen then reloads by itself. Over SSH, `./deploy/update.sh` does the same.
+
+If the GitHub repository is **private**, the Pi needs read access to fetch updates. Use one of:
+- a deploy key: `ssh-keygen` on the Pi, add the public key under the repo's *Settings → Deploy keys*, then `git remote set-url origin git@github.com:conradoplano/piphotoframe.git`
+- a saved personal access token: `git config credential.helper store`, followed by one `git pull` where you enter the token
+
+The update only works if the code on the Pi hasn't been edited locally, because the pull refuses to overwrite local changes.
 
 What the installer sets up:
 - Chromium in kiosk mode inside the `cage` Wayland compositor, on tty1

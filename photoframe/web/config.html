@@ -157,7 +157,12 @@
     <h2>System</h2>
     <label class="check"><input type="checkbox" data-path="verify_tls"> Verify the NAS's HTTPS certificate</label>
     <p class="note" id="sys-info"></p>
+    <h3>Software update</h3>
+    <p class="note" id="upd-msg">Check GitHub for a newer version of the frame software.</p>
+    <ul id="upd-commits" class="commits hidden"></ul>
     <div class="row-actions">
+      <button type="button" id="upd-check">Check for updates</button>
+      <button type="button" id="upd-install" class="primary hidden">Install update</button>
       <button type="button" id="reboot" class="danger">Restart frame</button>
     </div>
   </section>

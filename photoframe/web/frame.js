@@ -228,6 +228,11 @@ async function loadWeather() {
 async function poll() {
   try {
     const st = await api('/api/state');
+    if (S.build && st.build && st.build !== S.build) {
+      location.reload(); // the server was updated: load the new page code
+      return;
+    }
+    S.build = st.build;
     S.state = st;
     if (st.config_version !== S.configVersion) {
       S.config = await api('/api/config');

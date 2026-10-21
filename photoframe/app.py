@@ -27,6 +27,7 @@ from .settings import Settings
 from .state import RuntimeState
 from .sync import Syncer
 from .synology import SynologyShare
+from .updater import Updater
 from .weather import WeatherService, geocode
 
 log = logging.getLogger(__name__)
@@ -87,6 +88,7 @@ def create_app(settings: Settings) -> FastAPI:
         find_sensor = detect_sensor
     brightness = BrightnessController(store, state, backlight, find_sensor)
     netmon = NetworkMonitor(wifi, state, library)
+    updater = Updater(can_restart=not settings.dev)
 
     def on_config_change(old: Config, new: Config) -> None:
         if [a.model_dump() for a in old.albums] != [a.model_dump() for a in new.albums] \
@@ -153,6 +155,7 @@ def create_app(settings: Settings) -> FastAPI:
     async def get_state():
         return {
             "version": __version__,
+            "build": updater.build,
             "config_version": store.version,
             "photos_version": library.version,
             "photo_count": len(library.photos),
@@ -261,6 +264,22 @@ def create_app(settings: Settings) -> FastAPI:
             return {"ok": True, "message": "Simulated reboot"}
         subprocess.Popen(["systemctl", "reboot"])
         return {"ok": True, "message": "Rebooting"}
+
+    # ---- software update ------------------------------------------------------
+    @app.get("/api/update")
+    async def update_status():
+        return updater.snapshot()
+
+    @app.post("/api/update/check")
+    async def update_check():
+        return await updater.check()
+
+    @app.post("/api/update/install")
+    async def update_install():
+        if not updater.can_install:
+            raise HTTPException(400, "Updates can only be installed on the frame (not in --dev mode)")
+        app.state.update_task = asyncio.create_task(updater.install())  # keep a reference
+        return updater.snapshot()
 
     # ---- development helpers (simulated hardware only) ---------------------
     @app.post("/api/dev/lux")

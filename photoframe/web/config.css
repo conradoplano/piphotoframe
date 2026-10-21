@@ -93,6 +93,10 @@ summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .savebar #save-msg { flex: 1; color: var(--muted); font-size: 14px; }
 .savebar #save-msg.bad { color: var(--bad); }
 
+.commits { margin: 8px 0; padding-left: 18px; font-size: 13px; }
+.commits li { margin: 2px 0; overflow-wrap: anywhere; }
+.commits code { color: var(--muted); margin-right: 6px; }
+
 #toast {
   position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 7;
   background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 99px; font-size: 14px;
