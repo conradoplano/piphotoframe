@@ -80,6 +80,9 @@ sed "s/@USER@/$KIOSK_USER/g" "$REPO_DIR/deploy/50-photoframe.rules" > /etc/polki
 install -m 644 "$REPO_DIR/deploy/pam-photoframe-kiosk" /etc/pam.d/photoframe-kiosk
 udevadm control --reload-rules && udevadm trigger --subsystem-match=backlight || true
 
+echo "==> Invisible mouse cursor for the kiosk"
+python3 "$REPO_DIR/deploy/blank_cursor.py" /usr/share/icons/photoframe-blank
+
 echo "==> systemd services"
 for unit in photoframe.service photoframe-kiosk.service; do
   sed -e "s|@USER@|$KIOSK_USER|g" -e "s|@REPO@|$REPO_DIR|g" -e "s|@DATA@|$DATA_DIR|g" \

@@ -19,6 +19,9 @@ StandardInput=tty-fail
 UtmpIdentifier=tty1
 UtmpMode=user
 Environment=FRAME_URL=http://127.0.0.1:80/frame
+# touch-only frame: use the transparent cursor theme installed by install.sh
+Environment=XCURSOR_THEME=photoframe-blank
+Environment=XCURSOR_SIZE=24
 # Uncomment if the picture appears rotated (values: normal, 90, 180, 270)
 #Environment=FRAME_ROTATE=90
 ExecStart=/usr/bin/cage -d -s -- @REPO@/deploy/kiosk.sh
