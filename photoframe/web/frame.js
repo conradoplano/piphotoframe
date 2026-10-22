@@ -379,8 +379,10 @@ let touch = null, pressTimer = null;
 
 document.addEventListener('pointerdown', (e) => {
   if (Wifi.isOpen()) return;
+  // Every touch counts as a wake: our idea of screen_on can be up to one poll out of date,
+  // and while the room is dark the server only switches the screen on after a wake.
+  post('/api/wake').catch(() => {});
   if (S.state && !S.state.screen_on) {
-    post('/api/wake').catch(() => {});
     S.state.screen_on = true;
     $('#blank').classList.add('hidden');
     return;

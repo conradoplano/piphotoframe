@@ -3,7 +3,7 @@ from datetime import datetime, time
 import pytest
 from PIL import Image
 
-from photoframe.brightness import compute_target, night_active
+from photoframe.brightness import compute_target, night_active, wake_brightness
 from photoframe.config import Brightness, Config, Night
 from photoframe.network import split_terse
 from photoframe.render import compose
@@ -49,6 +49,13 @@ def test_brightness_curve():
     assert compute_target(b, 31.62) == pytest.approx(55, abs=0.5)  # log midpoint
     assert compute_target(b, None) == b.manual_pct
     assert compute_target(Brightness(auto=False, manual_pct=42), 500) == 42
+
+
+def test_wake_brightness_is_readable():
+    b = Brightness(min_pct=2, max_pct=26)
+    assert wake_brightness(b) == 14
+    assert wake_brightness(b) > compute_target(b, 0)  # brighter than the dark-room minimum
+    assert wake_brightness(Brightness(auto=False, manual_pct=60)) == 60
 
 
 def test_night_window():

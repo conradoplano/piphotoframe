@@ -36,6 +36,14 @@ def compute_target(b: Brightness, lux: float | None) -> float:
     return lo + (hi - lo) * f
 
 
+def wake_brightness(b: Brightness) -> float:
+    """Brightness after a touch wakes a screen that is off: halfway between the limits."""
+    if not b.auto:
+        return float(b.manual_pct)
+    lo, hi = sorted((b.min_pct, b.max_pct))
+    return (lo + hi) / 2
+
+
 def _hhmm(s: str) -> dtime:
     h, m = map(int, s.split(":"))
     return dtime(h, m)
@@ -62,8 +70,7 @@ class BrightnessController:
         self._dark_off = False
 
     def _should_be_off(self, cfg: Config, lux: float | None) -> bool:
-        if time.time() < self.state.wake_until:
-            return False
+        """Night schedule or a dark room; ignores a touch wake (handled by the caller)."""
         if night_active(cfg.night, datetime.now().time()):
             return True
         threshold = cfg.brightness.off_below_lux
@@ -98,9 +105,17 @@ class BrightnessController:
 
             cfg = self.store.config
             target = compute_target(cfg.brightness, self.state.lux)
+            dark = self._should_be_off(cfg, self.state.lux)
+            woken = dark and time.time() < self.state.wake_until
+            off = dark and not woken
+            if woken:
+                # A touch in a dark room must give a readable screen, not the minimum
+                # brightness (a few percent looks the same as off on this panel).
+                b = cfg.brightness
+                target = max(target, wake_brightness(b))
+                current = target  # straight on, no fade-in
             # glide towards the target instead of jumping
             current = target if current is None else current + max(-3.0, min(3.0, target - current))
-            off = self._should_be_off(cfg, self.state.lux)
             try:
                 if off:
                     self.backlight.set_power(False)
