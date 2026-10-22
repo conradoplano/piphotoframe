@@ -81,7 +81,8 @@ install -m 644 "$REPO_DIR/deploy/pam-photoframe-kiosk" /etc/pam.d/photoframe-kio
 udevadm control --reload-rules && udevadm trigger --subsystem-match=backlight || true
 
 echo "==> Invisible mouse cursor for the kiosk"
-python3 "$REPO_DIR/deploy/blank_cursor.py" /usr/share/icons/photoframe-blank
+rm -rf /usr/share/icons/photoframe-blank  # location used by an earlier version
+python3 "$REPO_DIR/deploy/blank_cursor.py" /usr/share/photoframe/icons/default
 
 echo "==> systemd services"
 for unit in photoframe.service photoframe-kiosk.service; do

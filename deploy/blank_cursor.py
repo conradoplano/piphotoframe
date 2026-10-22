@@ -1,10 +1,11 @@
 """Writes an invisible Xcursor theme so the kiosk shows no mouse pointer.
 
 cage draws its default cursor in the middle of the screen until a mouse moves, which never
-happens on a touch-only frame. Pointing XCURSOR_THEME at this theme makes that cursor a
-single transparent pixel.
+happens on a touch-only frame. cage ignores XCURSOR_THEME and always loads the theme called
+"default", so the theme is installed as "default" in a folder of its own, and the kiosk service
+sets XCURSOR_PATH to only that folder. The cursor is then a single transparent pixel.
 
-Usage: python3 blank_cursor.py /usr/share/icons/photoframe-blank
+Usage: python3 blank_cursor.py /usr/share/photoframe/icons/default
 """
 
 import struct
@@ -40,4 +41,4 @@ def main(theme_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1] if len(sys.argv) > 1 else "/usr/share/icons/photoframe-blank"))
+    main(Path(sys.argv[1] if len(sys.argv) > 1 else "/usr/share/photoframe/icons/default"))
