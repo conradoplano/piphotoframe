@@ -66,6 +66,7 @@ class Config(BaseModel):
     units: Literal["C", "F"] = "C"
     clock_24h: bool = True
     show_date: bool = True
+    show_forecast: bool = True  # next three days under the (main) city's weather
     language: str = "en"
     brightness: Brightness = Field(default_factory=Brightness)
     night: Night = Field(default_factory=Night)

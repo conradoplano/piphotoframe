@@ -168,6 +168,15 @@ function dayName(isoDate) {
 
 const temp = (t) => (t === null || t === undefined ? '–' : `${Math.round(t)}°`);
 
+// the next three days (index 0 of Open-Meteo's daily list is today)
+function daysHtml(daily) {
+  const days = (daily || []).slice(1, 4);
+  if (!days.length || !S.config.show_forecast) return '';
+  return '<div class="days">' + days.map((d) => `<div class="day">
+      <span class="dow">${esc(dayName(d.date))}</span>${Icons.weather(d.code)}
+      <span>${temp(d.max)}<span class="lo">${temp(d.min)}</span></span></div>`).join('') + '</div>';
+}
+
 function renderOverlay() {
   if (!S.config) return;
   const cities = (S.weather && S.weather.cities) || [];
@@ -187,19 +196,21 @@ function renderOverlay() {
           <div class="time" data-clock="${esc(main.timezone)}"></div>
           <div class="date">${S.config.show_date ? `<span data-date="${esc(main.timezone)}"></span> · ` : ''}${esc(main.name)}</div>
         </div>
-        <div class="weather">${now(0)}</div>
+        <div class="weather">
+          <div class="now">${now(0)}</div>
+          ${daysHtml((cities[0] || {}).daily)}
+        </div>
       </div>
       ${others.length ? '<div class="others">' + others.map((c, j) => `<div class="other">
-          <div class="city">${esc(c.name)}</div>
-          <div class="line"><span class="time" data-clock="${esc(c.timezone)}"></span>
+          <div class="line"><span class="time" data-clock="${esc(c.timezone)}" data-hide-if-same="${esc(main.timezone)}"></span>
             <span class="weather">${now(j + 1)}</span></div>
+          <div class="city">${esc(c.name)}</div>
         </div>`).join('') + '</div>' : ''}
     </div>`;
   } else {
     const c = cfgCities[0];
     const w = cities[0] || {};
     const cur = w.current;
-    const days = (w.daily || []).slice(1, 4);
     const tz = c ? c.timezone : '';
     html = `<div class="forecast">
       <div class="clock">
@@ -209,9 +220,7 @@ function renderOverlay() {
       </div>
       <div class="weather">
         ${cur ? `<div class="now">${Icons.weather(cur.code, cur.is_day)}<span>${temp(cur.temp)}</span></div>` : ''}
-        ${days.length ? '<div class="days">' + days.map((d) => `<div class="day">
-            <span class="dow">${esc(dayName(d.date))}</span>${Icons.weather(d.code)}
-            <span>${temp(d.max)}<span class="lo">${temp(d.min)}</span></span></div>`).join('') + '</div>' : ''}
+        ${daysHtml(w.daily)}
       </div>
     </div>`;
   }
@@ -224,6 +233,11 @@ function tick() {
   document.querySelectorAll('[data-clock]').forEach((el) => {
     const html = timeHtml(el.dataset.clock);
     if (el.innerHTML !== html) el.innerHTML = html;
+    // a secondary city in the main city's time zone needs no second clock
+    // (checked every tick, since daylight saving can make two zones match or differ)
+    if (el.dataset.hideIfSame !== undefined) {
+      el.hidden = html === timeHtml(el.dataset.hideIfSame);
+    }
   });
   document.querySelectorAll('[data-date]').forEach((el) => {
     const text = dateText(el.dataset.date);

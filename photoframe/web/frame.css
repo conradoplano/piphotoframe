@@ -64,8 +64,15 @@ html.embedded, html.embedded * { cursor: auto !important; } /* dev preview: keep
 .multi .main .clock { min-width: 0; }
 .multi .main .time { font-size: 15vw; font-weight: 300; line-height: .95; letter-spacing: -.04em; }
 .multi .main .date { font-size: 3.4vw; font-weight: 500; margin-top: 1.2vw; opacity: .9; }
-.multi .main .weather { display: flex; align-items: center; gap: 1.5vw; font-size: 10vw; font-weight: 300; line-height: 1; }
-.multi .main .weather .icon { font-size: 11vw; }
+.multi .main .weather { text-align: right; }
+.multi .main .now { display: flex; align-items: center; justify-content: flex-end; gap: 1.5vw; font-size: 10vw; font-weight: 300; line-height: 1; }
+.multi .main .now .icon { font-size: 11vw; }
+/* small 3-day forecast under the main city's temperature */
+.multi .main .days { display: flex; gap: 3vw; margin-top: 1.8vw; justify-content: flex-end; }
+.multi .main .day { display: flex; flex-direction: column; align-items: center; gap: .4vw; font-size: 2.6vw; }
+.multi .main .day .icon { font-size: 4.6vw; }
+.multi .main .day .lo { opacity: .65; margin-left: .5vw; }
+.multi .main .dow { font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 2.2vw; opacity: .9; }
 
 /* the other cities: smaller, side by side below the main one (left / right) */
 .multi .others {
@@ -74,11 +81,12 @@ html.embedded, html.embedded * { cursor: auto !important; } /* dev preview: keep
 }
 .multi .other { min-width: 0; }
 .multi .other:nth-child(2) { text-align: right; }
-.multi .other .city { font-size: 3.4vw; opacity: .9; margin-bottom: .8vw; }
-.multi .other .line { display: flex; align-items: center; gap: 3vw; }
+.multi .other .city { font-size: 3.4vw; opacity: .9; margin-top: 1vw; }
+.multi .other .line { display: flex; align-items: center; gap: 5vw; }
+.multi .other .time[hidden] { display: none; }
 .multi .other:nth-child(2) .line { justify-content: flex-end; }
 /* clock and temperature share one size */
-.multi .other { --other-size: 7.5vw; }
+.multi .other { --other-size: 6.2vw; }
 .multi .other .time { font-size: var(--other-size); font-weight: 300; line-height: 1; letter-spacing: -.03em; }
 .multi .other .weather { display: flex; align-items: center; gap: 1.4vw; font-size: var(--other-size); font-weight: 300; line-height: 1; }
 .multi .other .weather .icon { font-size: calc(var(--other-size) * .9); }

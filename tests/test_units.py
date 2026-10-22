@@ -27,6 +27,11 @@ def test_parse_share_url_rejects(url):
         parse_share_url(url)
 
 
+def test_old_config_gets_forecast_default():
+    # config files saved before the setting existed keep showing the forecast
+    assert Config.model_validate({"units": "C"}).show_forecast is True
+
+
 def test_config_rejects_bad_album():
     with pytest.raises(ValueError):
         Config.model_validate({"albums": [{"url": "https://example.com/"}]})
