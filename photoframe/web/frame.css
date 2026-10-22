@@ -17,7 +17,10 @@ html, body {
   cursor: none; user-select: none; -webkit-user-select: none;
   touch-action: none; overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
+/* a long press must not start dragging the photo (it would cancel the QR long-press) */
+img, svg { -webkit-user-drag: none; user-drag: none; }
 button { font: inherit; color: inherit; cursor: none; }
 html.embedded, html.embedded * { cursor: auto !important; } /* dev preview: keep the mouse visible */
 .hidden { display: none !important; }

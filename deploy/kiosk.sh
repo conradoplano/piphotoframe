@@ -20,6 +20,6 @@ exec "$CHROMIUM" \
   --user-data-dir="$PROFILE" \
   --noerrdialogs --disable-infobars --no-first-run \
   --disable-session-crashed-bubble --disable-features=Translate,TranslateUI \
-  --overscroll-history-navigation=0 --disable-pinch \
+  --overscroll-history-navigation=0 --disable-pinch --disable-touch-drag-drop \
   --check-for-update-interval=31536000 --password-store=basic \
   --autoplay-policy=no-user-gesture-required

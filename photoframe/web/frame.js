@@ -411,6 +411,8 @@ document.addEventListener('pointerup', (e) => {
 
 document.addEventListener('pointercancel', () => { touch = null; clearTimeout(pressTimer); });
 document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('dragstart', (e) => e.preventDefault());
+document.querySelectorAll('img').forEach((img) => (img.draggable = false));
 
 // keyboard shortcuts for testing on a computer
 document.addEventListener('keydown', (e) => {
