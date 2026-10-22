@@ -276,6 +276,16 @@ $('#sync-now').addEventListener('click', async () => {
   } catch (e) { toast(e.message); }
 });
 
+$('#shutdown').addEventListener('click', async () => {
+  if (!confirm('Shut down the photo frame?\n\nWait until the screen is dark and the green light on the Pi ' +
+    'stops blinking before unplugging it. To turn it on again, unplug the power and plug it back in.')) return;
+  try {
+    toast((await post('/api/system/shutdown')).message);
+    $('#conn').textContent = 'Shutting down';
+    $('#conn').className = 'pill bad';
+  } catch (e) { toast(e.message); }
+});
+
 $('#reboot').addEventListener('click', async () => {
   if (!confirm('Restart the photo frame now?')) return;
   try { toast((await post('/api/system/reboot')).message); } catch (e) { toast(e.message); }

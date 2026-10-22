@@ -265,6 +265,13 @@ def create_app(settings: Settings) -> FastAPI:
         subprocess.Popen(["systemctl", "reboot"])
         return {"ok": True, "message": "Rebooting"}
 
+    @app.post("/api/system/shutdown")
+    async def shutdown():
+        if settings.mock:
+            return {"ok": True, "message": "Simulated shutdown"}
+        subprocess.Popen(["systemctl", "poweroff"])
+        return {"ok": True, "message": "Shutting down"}
+
     # ---- software update ------------------------------------------------------
     @app.get("/api/update")
     async def update_status():
