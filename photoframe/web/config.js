@@ -166,7 +166,7 @@ $('#album-add').addEventListener('submit', (e) => {
 function renderCities() {
   const multi = cfg.weather_mode === 'multi';
   $('#cities-note').textContent = multi
-    ? 'Up to three cities, each with its own local time and current weather.'
+    ? 'Up to three cities, each with its own local time and current weather. The first one is shown large; use ↑ to choose it.'
     : 'The first city is used for the clock (its time zone) and the forecast.';
   const list = $('#cities');
   list.innerHTML = cfg.cities.map((c, i) => `<li class="${!multi && i > 0 ? 'unused' : ''}">

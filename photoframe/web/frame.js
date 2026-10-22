@@ -174,15 +174,27 @@ function renderOverlay() {
   const cfgCities = S.config.cities;
   let html;
   if (S.config.weather_mode === 'multi' && cfgCities.length) {
-    html = '<div class="multi">' + cfgCities.map((c, i) => {
-      const w = cities[i] || {};
-      const cur = w.current;
-      return `<div class="row">
-        <span class="city">${esc(c.name)}</span>
-        <span class="time" data-clock="${esc(c.timezone)}"></span>
-        <div class="weather">${cur ? Icons.weather(cur.code, cur.is_day) + `<span>${temp(cur.temp)}</span>` : ''}</div>
-      </div>`;
-    }).join('') + '</div>';
+    // The first city is the main one: large, with the date. The others sit below it, smaller,
+    // one on the left and one on the right. Each reads: name, time, weather.
+    const now = (i) => {
+      const cur = (cities[i] || {}).current;
+      return cur ? Icons.weather(cur.code, cur.is_day) + `<span>${temp(cur.temp)}</span>` : '';
+    };
+    const [main, ...others] = cfgCities;
+    html = `<div class="multi">
+      <div class="main">
+        <div class="clock">
+          <div class="time" data-clock="${esc(main.timezone)}"></div>
+          <div class="date">${S.config.show_date ? `<span data-date="${esc(main.timezone)}"></span> · ` : ''}${esc(main.name)}</div>
+        </div>
+        <div class="weather">${now(0)}</div>
+      </div>
+      ${others.length ? '<div class="others">' + others.map((c, j) => `<div class="other">
+          <div class="city">${esc(c.name)}</div>
+          <div class="line"><span class="time" data-clock="${esc(c.timezone)}"></span>
+            <span class="weather">${now(j + 1)}</span></div>
+        </div>`).join('') + '</div>' : ''}
+    </div>`;
   } else {
     const c = cfgCities[0];
     const w = cities[0] || {};
