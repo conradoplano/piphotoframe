@@ -111,6 +111,19 @@ def test_split_terse():
     assert split_terse(r"*:My\:Net:80:WPA2") == ["*", "My:Net", "80", "WPA2"]
 
 
+def test_landscape_renders_are_landscape(tmp_path):
+    from photoframe.library import PhotoLibrary
+    lib = PhotoLibrary(tmp_path, (800, 1280))
+    Image.new("RGB", (1600, 1200), (10, 20, 30)).save(lib.src_path("a_1"))
+    lib.photos["a_1"] = {"cache_key": "1"}
+    with Image.open(lib.rendered("a_1", "blur", landscape=True)) as im:
+        assert im.size == (1280, 800)
+    with Image.open(lib.rendered("a_1", "blur")) as im:
+        assert im.size == (800, 1280)
+    lib.prerender("blur", landscape=True)  # switching drops the portrait renders
+    assert not lib.render_path("a_1", "blur").exists()
+
+
 @pytest.mark.parametrize("mode", ["blur", "cover", "contain"])
 @pytest.mark.parametrize("size", [(1600, 1200), (900, 1400), (1200, 1200)])
 def test_compose_fills_screen(mode, size):

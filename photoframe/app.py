@@ -25,7 +25,7 @@ from .library import PhotoLibrary
 from .network import MockWifi, NetworkMonitor, NmcliWifi, local_ip
 from .settings import Settings
 from .state import RuntimeState
-from .sync import Syncer
+from .sync import Syncer, wanted_clip
 from .synology import SynologyShare
 from .updater import Updater
 from .weather import WeatherService, geocode
@@ -99,7 +99,7 @@ def create_app(settings: Settings) -> FastAPI:
             syncer.reschedule()
         if old.cities != new.cities or old.units != new.units:
             weather.poke()
-        if old.fit_mode != new.fit_mode:
+        if old.fit_mode != new.fit_mode or old.orientation != new.orientation:
             syncer.prerender_soon()
 
     store.subscribe(on_config_change)
@@ -124,6 +124,10 @@ def create_app(settings: Settings) -> FastAPI:
         return response
 
     app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+
+    def current_layout() -> str:
+        """Photos are rendered for one of two layouts; both landscape orientations share one."""
+        return "portrait" if store.config.orientation == "portrait" else "landscape"
 
     def access_url() -> str:
         ip = local_ip() or socket.gethostname()
@@ -181,10 +185,13 @@ def create_app(settings: Settings) -> FastAPI:
     @app.get("/api/photos")
     async def list_photos():
         cfg = store.config
+        layout = current_layout()
         return {
             "version": library.version,
             "order": cfg.order,
-            "items": [{"id": k, "url": f"/photos/{k}.jpg?fit={cfg.fit_mode}&v={m['cache_key']}"}
+            "layout": layout,
+            "items": [{"id": k, "url": f"/photos/{k}.jpg?fit={cfg.fit_mode}&layout={layout}"
+                                        f"&v={m['cache_key']}"}
                       for k, m in library.ordered(cfg.order)],
             "clips": [{"id": k, "url": f"/clips/{k}.mp4?v={m['cache_key']}", "duration": m["duration"]}
                       for k, m in library.clips.items()] if cfg.clips_enabled else [],
@@ -198,8 +205,9 @@ def create_app(settings: Settings) -> FastAPI:
                             headers={"Cache-Control": "public, max-age=86400"})
 
     @app.get("/photos/{key}.jpg", include_in_schema=False)
-    async def photo(key: str, fit: str | None = None):
-        path = await run_in_threadpool(library.rendered, key, fit or store.config.fit_mode)
+    async def photo(key: str, fit: str | None = None, layout: str | None = None):
+        landscape = (layout or current_layout()) == "landscape"
+        path = await run_in_threadpool(library.rendered, key, fit or store.config.fit_mode, landscape)
         if path is None:
             raise HTTPException(404)
         return FileResponse(path, media_type="image/jpeg",
@@ -214,10 +222,12 @@ def create_app(settings: Settings) -> FastAPI:
     async def test_album(body: AlbumTest):
         try:
             async with SynologyShare(body.url, body.password, store.config.verify_tls) as share:
-                photos = await share.list_photos()
+                photos, videos = await share.list_media()
         except Exception as e:
             return {"ok": False, "error": str(e)}
-        return {"ok": True, "count": len(photos)}
+        cfg = store.config
+        used = sum(wanted_clip(v.duration, cfg) for v in videos)
+        return {"ok": True, "count": len(photos), "videos": used, "videos_unused": len(videos) - used}
 
     # ---- weather ----------------------------------------------------------
     @app.get("/api/weather")

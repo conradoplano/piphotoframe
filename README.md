@@ -1,6 +1,6 @@
 # Photo frame
 
-A digital photo frame for a Raspberry Pi 4 with the Waveshare 10.1" DSI touch display (800×1280, portrait).
+A digital photo frame for a Raspberry Pi 4 with the Waveshare 10.1" DSI touch display (800×1280). It hangs in portrait or landscape: turn the frame and pick the orientation on the settings page (Slideshow → Screen orientation); the picture is rotated in software, so no restart or reinstall is needed.
 
 - Shows photos from one or more **Synology Photos shared albums**, synced once a day.
 - Clock in the bottom-left corner and weather in the bottom-right, using Open-Meteo (no API key needed). The layout follows the number of cities:

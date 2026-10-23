@@ -45,6 +45,15 @@
   <section class="card">
     <h2>Slideshow</h2>
     <div class="grid">
+      <label>Screen orientation
+        <select data-path="orientation">
+          <option value="portrait">Portrait (upright)</option>
+          <option value="landscape">Landscape</option>
+          <option value="landscape_flipped">Landscape, turned the other way</option>
+        </select>
+        <span class="hint">After turning the frame on its side, pick the landscape option in which
+          the picture is upright.</span>
+      </label>
       <label>Show each photo for
         <span class="combo">
           <input id="dur-value" type="number" min="1" step="1">

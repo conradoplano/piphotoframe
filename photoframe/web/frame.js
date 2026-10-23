@@ -364,6 +364,7 @@ async function poll() {
       S.config = await api('/api/config');
       S.configVersion = st.config_version;
       fmtCache.clear();
+      document.documentElement.dataset.orient = S.config.orientation || 'portrait';
       renderOverlay();
       loadWeather();
       await loadPhotos();
@@ -503,6 +504,15 @@ $('#qr-wifi').addEventListener('click', () => Wifi.open(false));
 
 let touch = null, pressTimer = null;
 
+// Touch positions are in panel coordinates; turn a movement into the rotated picture's
+// coordinates so "swipe left" always means left as the viewer sees it.
+function toScreen(dx, dy) {
+  const o = S.config && S.config.orientation;
+  if (o === 'landscape') return [dy, -dx];         // picture turned a quarter clockwise
+  if (o === 'landscape_flipped') return [-dy, dx]; // picture turned a quarter anticlockwise
+  return [dx, dy];
+}
+
 document.addEventListener('pointerdown', (e) => {
   if (Wifi.isOpen()) return;
   // Every touch counts as a wake: our idea of screen_on can be up to one poll out of date,
@@ -532,7 +542,7 @@ document.addEventListener('pointermove', (e) => {
 document.addEventListener('pointerup', (e) => {
   clearTimeout(pressTimer);
   if (!touch) return;
-  const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+  const [dx, dy] = toScreen(e.clientX - touch.x, e.clientY - touch.y);
   touch = null;
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) (dx < 0 ? swipeNext() : swipePrev());
 });

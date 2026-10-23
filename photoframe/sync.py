@@ -57,12 +57,23 @@ class Syncer:
     def reschedule(self) -> None:
         self._wakeup.set()
 
+    def _render_target(self) -> tuple[str, bool]:
+        cfg = self.store.config
+        return cfg.fit_mode, cfg.orientation != "portrait"
+
     def prerender_soon(self) -> None:
         if self._render_task and not self._render_task.done():
-            return
-        mode = self.store.config.fit_mode
-        self._render_task = asyncio.create_task(asyncio.to_thread(
-            self.library.prerender, mode, lambda: self.store.config.fit_mode == mode))
+            return  # the running pass notices a settings change and starts over
+
+        async def run() -> None:
+            while True:
+                target = self._render_target()
+                await asyncio.to_thread(self.library.prerender, *target,
+                                        lambda: self._render_target() == target)
+                if self._render_target() == target:
+                    return
+
+        self._render_task = asyncio.create_task(run())
 
     # ---- scheduler ------------------------------------------------------
     async def run_forever(self) -> None:
@@ -137,20 +148,24 @@ class Syncer:
                 log.warning("Album %s failed: %s", album.url, e)
                 prev = lib.albums.get(album.url, {})
                 lib.albums[album.url] = {"ok": False, "count": prev.get("count", 0),
+                                         "videos": prev.get("videos", 0),
                                          "error": str(e), "checked": time.time()}
                 # Keep what we already have from this album rather than wiping it.
                 wanted.update({k: v for k, v in lib.photos.items() if v.get("album") == album.url})
                 wanted_clips.update({k: v for k, v in lib.clips.items() if v.get("album") == album.url})
                 continue
+            used = 0
             for v in videos:
                 if wanted_clip(v.duration, cfg):
+                    used += 1
                     key = f"{akey}_{v.unit_id}"
                     wanted_clips[key] = {"album": album.url, "unit_id": v.unit_id,
                                          "cache_key": v.cache_key, "duration": v.duration,
                                          "taken": v.taken, "filename": v.filename}
                     clip_fetch.setdefault(album.url, []).append((key, v))
-            lib.albums[album.url] = {"ok": True, "count": len(photos), "error": None,
-                                     "checked": time.time()}
+            lib.albums[album.url] = {"ok": True, "count": len(photos), "videos": used,
+                                     "videos_unused": len(videos) - used,  # too long, or videos off
+                                     "error": None, "checked": time.time()}
             for p in photos:
                 key = f"{akey}_{p.unit_id}"
                 wanted[key] = {"album": album.url, "unit_id": p.unit_id, "cache_key": p.cache_key,

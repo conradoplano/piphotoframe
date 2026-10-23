@@ -86,8 +86,20 @@ function bindFields() {
 function albumStatus(url) {
   const st = state && state.albums && state.albums[url];
   if (!st) return ['Not synced yet', ''];
-  if (st.ok) return [`${st.count} photos`, 'ok'];
+  if (st.ok) return [mediaSummary(st), 'ok'];
   return [st.error || 'Error', 'bad'];
+}
+
+// "10 photos · 3 videos (1 more not used)"
+function mediaSummary(r) {
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  let text = plural(r.count, 'photo');
+  if (r.videos) text += ` · ${plural(r.videos, 'video')}`;
+  if (r.videos_unused) {
+    text += ` (${r.videos ? `${r.videos_unused} more` : plural(r.videos_unused, 'video')} not used: ` +
+      (cfg.clips_enabled ? 'too long' : 'videos are turned off') + ')';
+  }
+  return text;
 }
 
 function renderAlbums() {
@@ -130,7 +142,7 @@ function renderAlbums() {
       status.className = 'a-status note';
       try {
         const r = await post('/api/albums/test', { url: album.url, password: album.password });
-        status.textContent = r.ok ? `OK — ${r.count} photos found` : r.error;
+        status.textContent = r.ok ? `OK — ${mediaSummary(r)} found` : r.error;
         status.className = `a-status note ${r.ok ? 'ok' : 'bad'}`;
       } catch (err) {
         status.textContent = err.message;

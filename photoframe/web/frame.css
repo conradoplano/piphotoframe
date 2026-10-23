@@ -25,6 +25,16 @@ button { font: inherit; color: inherit; cursor: none; }
 html.embedded, html.embedded * { cursor: auto !important; } /* dev preview: keep the mouse visible */
 .hidden { display: none !important; }
 
+/* ---- orientation ----
+   The panel is always 800x1280 portrait. For landscape the whole #screen is laid out at 1280x800
+   and rotated a quarter turn; its fixed-position children then follow it. 1vw stays 8px (1% of the
+   short side) in every orientation, so the sizes below need no changes. */
+#screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; }
+html[data-orient="landscape"] #screen,
+html[data-orient="landscape_flipped"] #screen { width: 100vh; height: 100vw; transform-origin: top left; }
+html[data-orient="landscape"] #screen { transform: rotate(90deg) translateY(-100%); }
+html[data-orient="landscape_flipped"] #screen { transform: rotate(-90deg) translateX(-100%); }
+
 /* ---- slides ---- */
 #stage { position: fixed; inset: 0; overflow: hidden; }
 .slide {
@@ -55,14 +65,16 @@ body.clip #overlay, body.clip #offline { opacity: 0; }
 /* One small type scale for the whole overlay, shared by both layouts. Icons are 1em, so they
    always match the text next to them. */
 #overlay {
-  --t-clock: 15vw;   /* main clock */
-  --t-temp: 8.5vw;   /* main temperature */
-  --t-mid: 6vw;      /* secondary clocks and temperatures, forecast icons */
-  --t-text: 3.8vw;   /* date, forecast temperatures */
-  --t-label: 2.7vw;  /* city names, weekday labels */
+  --s: 1;            /* overall scale: smaller in landscape, where the screen is less tall */
+  --t-clock: calc(15vw * var(--s));   /* main clock */
+  --t-temp: calc(8.5vw * var(--s));   /* main temperature */
+  --t-mid: calc(6vw * var(--s));      /* secondary clocks and temperatures, forecast icons */
+  --t-text: calc(3.8vw * var(--s));   /* date, forecast temperatures */
+  --t-label: calc(2.7vw * var(--s));  /* city names, weekday labels */
 }
 /* without the forecast, the main temperature has room to match the clock's visual weight */
-#overlay.no-forecast { --t-temp: 12vw; }
+#overlay.no-forecast { --t-temp: calc(12vw * var(--s)); }
+html[data-orient^="landscape"] #overlay { --s: .8; padding-top: 10vw; }
 .time { font-weight: 300; line-height: 1; letter-spacing: -.03em; }
 .time small { font-size: .32em; font-weight: 500; margin-left: .25em; letter-spacing: 0; }
 .city { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

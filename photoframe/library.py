@@ -92,30 +92,37 @@ class PhotoLibrary:
         self._drop_renders(key)
 
     def _drop_renders(self, key: str) -> None:
-        for mode in FIT_MODES:
-            self.render_path(key, mode).unlink(missing_ok=True)
+        for variant_dir in self.render_root.glob("*"):
+            (variant_dir / f"{key}.jpg").unlink(missing_ok=True)
 
-    def rendered(self, key: str, mode: str) -> Path | None:
+    @staticmethod
+    def variant(mode: str, landscape: bool) -> str:
+        """Render folder name: the fit mode, plus the orientation the photo is laid out for."""
+        return f"{mode}-landscape" if landscape else mode
+
+    def rendered(self, key: str, mode: str, landscape: bool = False) -> Path | None:
         """Return the screen-ready image, rendering it on first use. Blocking: call from a thread."""
         if key not in self.photos or mode not in FIT_MODES:
             return None
-        dst = self.render_path(key, mode)
+        dst = self.render_path(key, self.variant(mode, landscape))
         if not dst.exists():
             src = self.src_path(key)
             if not src.exists():
                 return None
-            render(src, dst, mode, self.screen_size)
+            w, h = self.screen_size
+            render(src, dst, mode, (h, w) if landscape else (w, h))
         return dst
 
-    def prerender(self, mode: str, still_wanted=lambda: True) -> None:
-        """Render every photo for the current fit mode so the slideshow never waits."""
-        for mode_dir in self.render_root.glob("*"):
-            if mode_dir.name != mode and mode_dir.is_dir():
-                shutil.rmtree(mode_dir, ignore_errors=True)  # free SD space from old fit modes
+    def prerender(self, mode: str, landscape: bool = False, still_wanted=lambda: True) -> None:
+        """Render every photo for the current fit mode and orientation so the slideshow never waits."""
+        keep = self.variant(mode, landscape)
+        for variant_dir in self.render_root.glob("*"):
+            if variant_dir.name != keep and variant_dir.is_dir():
+                shutil.rmtree(variant_dir, ignore_errors=True)  # free SD space from old settings
         for key in list(self.photos):
             if not still_wanted():
                 return
             try:
-                self.rendered(key, mode)
+                self.rendered(key, mode, landscape)
             except Exception as e:
                 log.warning("Could not render %s: %s", key, e)

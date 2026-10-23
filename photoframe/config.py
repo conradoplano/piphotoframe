@@ -56,6 +56,9 @@ class Night(BaseModel):
 
 class Config(BaseModel):
     albums: list[Album] = Field(default_factory=list)
+    # how the frame hangs: portrait, or landscape turned one way or the other (the picture is
+    # rotated in software, so the setting applies immediately)
+    orientation: Literal["portrait", "landscape", "landscape_flipped"] = "portrait"
     slide_seconds: int = Field(30, ge=5, le=86400)
     order: Literal["shuffle", "newest", "oldest"] = "shuffle"
     fit_mode: Literal["blur", "cover", "contain"] = "blur"
