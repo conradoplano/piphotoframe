@@ -235,6 +235,10 @@ async function refreshState() {
     ? new Date(state.sync.next_run * 1000).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '–';
   $('#st-lux').textContent = state.sensor ? `${state.lux ?? '–'} lux` : 'no sensor';
   $('#st-screen').textContent = state.screen_on ? `${Math.round(state.brightness)}%` : 'off';
+  $('#bri-now').textContent = !state.sensor
+    ? 'No light sensor found, so the screen uses the fixed brightness.'
+    : `Right now: the room measures ${state.lux ?? '–'} lux, so the screen is ` +
+      (state.screen_on ? `at ${Math.round(state.brightness)}%.` : 'off.');
   $('#st-url').textContent = state.url;
   const sync = state.sync;
   const line = $('#st-sync');

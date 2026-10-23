@@ -117,6 +117,11 @@
 
   <section class="card">
     <h2>Screen brightness</h2>
+    <p class="note">The light sensor measures how bright the room is (in lux) and the screen follows it
+      smoothly: in a dark room it uses the <b>Darkest room</b> brightness, in a bright room the
+      <b>Brightest room</b> brightness, and in between something in the middle. Change the two sliders
+      if the screen feels too bright at night or too dim during the day.</p>
+    <p class="note" id="bri-now"></p>
     <label class="check"><input type="checkbox" data-path="brightness.auto"> Adjust to the room's light</label>
     <div class="grid">
       <label data-auto="1">Darkest room → <output data-for="brightness.min_pct"></output>
@@ -131,6 +136,10 @@
     </div>
     <details>
       <summary>Advanced</summary>
+      <p class="note">For reference: a dark bedroom is under 1 lux, a living room in the evening about
+        50–150 lux, a bright room by day 300–1000 lux. Below the "dark" level the screen stays at
+        the darkest brightness, above the "bright" level at the brightest. Turning the screen off
+        below a level makes it go dark when the lights are off; a touch wakes it for a minute.</p>
       <div class="grid">
         <label>"Dark" means at most (lux)
           <input type="number" min="0.1" step="0.1" data-path="brightness.dark_lux">
@@ -142,7 +151,6 @@
           <input type="number" min="0" step="0.1" data-path="brightness.off_below_lux">
         </label>
       </div>
-      <p class="note">Without a light sensor the fixed brightness is used.</p>
     </details>
     <h3>Night</h3>
     <label class="check"><input type="checkbox" data-path="night.enabled"> Turn the screen off at night (a touch wakes it for a minute)</label>
