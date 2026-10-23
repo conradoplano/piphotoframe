@@ -7,6 +7,7 @@ A digital photo frame for a Raspberry Pi 4 with the Waveshare 10.1" DSI touch di
   - **one city**: large clock, date, current weather and an optional 3-day forecast
   - **two or three cities**: the first city as above, with the others smaller below it (local time and current weather each)
 - Swipe left or right to change photos. Long-press (about 1 second) to show a QR code that opens the settings page.
+- Short videos in the albums are not shown like photos: swiping to the next photo first plays one of them (muted, at most one per minute by default), then shows the next photo. Optionally they also play between photos in the automatic slideshow.
 - Screen brightness follows the room light (BH1750 or VEML7700 sensor). The screen can turn off in a dark room or on a night schedule; a touch wakes it for a minute.
 - If no Wi-Fi is configured, the frame shows a network list and an on-screen keyboard. If the connection drops, the slideshow keeps running from the local cache until the next daily sync.
 - Settings page for phones and computers at `http://photoframe.local/` or `http://<frame-ip>/`. From there you can also install updates, restart the frame or shut it down.
@@ -103,7 +104,9 @@ Use **System → Shut down** on the settings page (or `sudo shutdown now` over S
 ## Synology album links
 
 In Synology Photos, open the album → **Share** → turn on the public share link and copy it. It looks like
-`https://nas.example.com:5001/mo/sharing/AbCdEf123`. Password-protected links work too: enter the password under the album on the settings page. The frame downloads Synology's 1280 px thumbnails rather than the originals, which is fast and enough for this screen. Videos are skipped.
+`https://nas.example.com:5001/mo/sharing/AbCdEf123`. Password-protected links work too: enter the password under the album on the settings page. The frame downloads Synology's 1280 px thumbnails rather than the originals, which is fast and enough for this screen.
+
+For videos, the frame downloads the 720p H.264 version that Synology Photos creates itself (videos without it yet are picked up at a later sync), which the Pi plays smoothly. Videos longer than one minute are never downloaded; longer than the configured clip length, they are either played only from the beginning or skipped (settings page → Slideshow → Short videos).
 
 The frame has to be able to reach the NAS at that address from your home network. If your router doesn't support reaching its own public address from inside the network ("NAT loopback"), use a local address in the link instead, such as `https://192.168.1.10:5001/mo/sharing/…`. In that case, also turn off **Verify the NAS's HTTPS certificate** under System, because the certificate won't match that address.
 

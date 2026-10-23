@@ -60,6 +60,12 @@ class Config(BaseModel):
     order: Literal["shuffle", "newest", "oldest"] = "shuffle"
     fit_mode: Literal["blur", "cover", "contain"] = "blur"
     transition: Literal["fade", "none"] = "fade"
+    # short videos from the albums, played (muted) when swiping to the next photo
+    clips_enabled: bool = True
+    clip_max_seconds: int = Field(10, ge=3, le=60)
+    clip_long: Literal["trim", "skip"] = "trim"  # videos longer than clip_max_seconds
+    clip_pause_seconds: int = Field(60, ge=0, le=3600)  # at most one video per this many seconds
+    clips_in_slideshow: bool = False  # also play one between photos in the automatic slideshow
     sync_time: str = Field("03:00", pattern=HHMM)
     cities: list[City] = Field(default_factory=list, max_length=3)
     units: Literal["C", "F"] = "C"

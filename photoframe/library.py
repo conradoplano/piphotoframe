@@ -28,8 +28,11 @@ class PhotoLibrary:
         self.render_root = root / "render"
         self.index_path = root / "index.json"
         self.screen_size = screen_size
+        self.clip_dir = root / "clips"
         self.src_dir.mkdir(parents=True, exist_ok=True)
+        self.clip_dir.mkdir(parents=True, exist_ok=True)
         self.photos: dict[str, dict] = {}
+        self.clips: dict[str, dict] = {}  # short videos, shown when swiping to the next photo
         self.albums: dict[str, dict] = {}  # album url -> {ok, count, error, checked}
         self.last_sync: float | None = None
         self.version = 1
@@ -45,19 +48,28 @@ class PhotoLibrary:
             log.exception("Photo index unreadable, starting empty")
             return
         self.photos = {k: v for k, v in data.get("photos", {}).items() if self.src_path(k).exists()}
+        self.clips = {k: v for k, v in data.get("clips", {}).items() if self.clip_path(k).exists()}
         self.albums = data.get("albums", {})
         self.last_sync = data.get("last_sync")
 
     def commit(self) -> None:
         """Persist the index and tell the frame that the photo list changed."""
         with self._lock:
-            payload = json.dumps({"photos": self.photos, "albums": self.albums,
+            payload = json.dumps({"photos": self.photos, "clips": self.clips, "albums": self.albums,
                                   "last_sync": self.last_sync})
         write_atomic(self.index_path, payload)
         self.version += 1
 
     def src_path(self, key: str) -> Path:
         return self.src_dir / f"{key}.jpg"
+
+    def clip_path(self, key: str) -> Path:
+        return self.clip_dir / f"{key}.mp4"
+
+    def remove_clip(self, key: str) -> None:
+        with self._lock:
+            self.clips.pop(key, None)
+        self.clip_path(key).unlink(missing_ok=True)
 
     def render_path(self, key: str, mode: str) -> Path:
         return self.render_root / mode / f"{key}.jpg"

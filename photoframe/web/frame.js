@@ -14,6 +14,7 @@ const S = {
   config: null, configVersion: null, photosVersion: null, state: null, weather: null,
   photos: new Map(), queue: [], pos: -1, current: null,
   timer: null, front: $('#slideA'), back: $('#slideB'), showToken: 0,
+  clips: [], clipQueue: [], lastClipAt: 0, clip: null, // clip = the one playing: { finish }
 };
 
 /* ================= slideshow ================= */
@@ -40,7 +41,7 @@ function buildQueue(keepId) {
 function schedule() {
   clearTimeout(S.timer);
   if (!S.config) return;
-  S.timer = setTimeout(() => go(1, 'auto'), S.config.slide_seconds * 1000);
+  S.timer = setTimeout(() => (S.clip ? schedule() : autoNext()), S.config.slide_seconds * 1000);
 }
 
 async function go(step, how) {
@@ -78,7 +79,7 @@ async function show(id, how) {
   if (token !== S.showToken) return true;
 
   const swipe = how === 'next' || how === 'prev';
-  const fade = S.config.transition === 'fade' && S.current !== null;
+  const fade = how !== 'none' && S.config.transition === 'fade' && S.current !== null;
   const ms = swipe ? 450 : fade ? 1400 : 0;
   inc.style.transition = out.style.transition = 'none';
   inc.style.zIndex = 2; out.style.zIndex = 1;
@@ -108,6 +109,8 @@ async function loadPhotos() {
   const data = await api('/api/photos');
   const before = S.current ? S.photos.get(S.current) : null;
   S.photos = new Map(data.items.map((p) => [p.id, p]));
+  S.clips = data.clips || [];
+  S.clipQueue = S.clipQueue.filter((c) => S.clips.some((x) => x.id === c.id));
   buildQueue(S.current);
   updateEmpty();
   const now = S.current ? S.photos.get(S.current) : null;
@@ -119,6 +122,91 @@ async function loadPhotos() {
     if (!now) S.pos = -1; else S.pos -= 1;
     go(1, 'auto');
   }
+}
+
+/* ================= short videos ================= */
+// Swiping to the next photo first plays a short muted video from the albums (at most one every
+// clip_pause_seconds), then fades to the next photo. With clips_in_slideshow they also play
+// between photos in the automatic slideshow, sharing the same pause.
+
+function nextClip() {
+  if (!S.clipQueue.length) {
+    const last = S.lastClipId;
+    S.clipQueue = shuffle(S.clips.slice());
+    if (S.clipQueue.length > 1 && S.clipQueue[0].id === last) S.clipQueue.push(S.clipQueue.shift());
+  }
+  const clip = S.clipQueue.shift();
+  if (clip) S.lastClipId = clip.id;
+  return clip;
+}
+
+function clipDue() {
+  const c = S.config;
+  return c && c.clips_enabled && S.clips.length && S.queue.length &&
+    Date.now() - S.lastClipAt >= c.clip_pause_seconds * 1000;
+}
+
+// Plays one clip; resolves with 'next' (finished or skipped) or 'stay' (swiped back / failed).
+function playClip(clip) {
+  const v = $('#clip');
+  const limit = Math.min(clip.duration || S.config.clip_max_seconds, S.config.clip_max_seconds);
+  return new Promise((resolve) => {
+    let safety;
+    const finish = (action) => {
+      if (!S.clip) return;
+      S.clip = null;
+      clearTimeout(safety);
+      v.ontimeupdate = v.onended = v.onerror = null;
+      resolve(action);
+    };
+    S.clip = { finish };
+    // stop a little before the limit so the fade-out ends on time (trims longer videos)
+    v.ontimeupdate = () => { if (v.currentTime >= limit - 0.6) finish('next'); };
+    v.onended = () => finish('next');
+    v.onerror = () => finish('stay');
+    safety = setTimeout(() => finish('next'), (limit + 8) * 1000); // e.g. a stalled download
+    v.muted = true;
+    v.src = clip.url;
+    v.play().then(() => document.body.classList.add('clip')).catch(() => finish('stay'));
+  });
+}
+
+function hideClip() {
+  const v = $('#clip');
+  document.body.classList.remove('clip');
+  setTimeout(() => {
+    if (S.clip) return; // a new clip started meanwhile
+    v.pause();
+    v.removeAttribute('src');
+    v.load();
+  }, 700);
+}
+
+function swipeNext() {
+  if (S.clip) { S.clip.finish('next'); return; } // swiping during a clip skips it
+  if (clipDue()) clipThenNext();
+  else go(1, 'next');
+}
+
+function autoNext() {
+  // no videos for an empty room: skip them while the screen is off (dark room / night)
+  const screenOn = !S.state || S.state.screen_on;
+  if (S.config.clips_in_slideshow && screenOn && clipDue()) clipThenNext();
+  else go(1, 'auto');
+}
+
+async function clipThenNext() {
+  S.lastClipAt = Date.now();
+  clearTimeout(S.timer);
+  const action = await playClip(nextClip());
+  if (action === 'next') await go(1, 'none'); // swap the photo while the video still covers it
+  hideClip();
+  schedule();
+}
+
+function swipePrev() {
+  if (S.clip) { S.clip.finish('stay'); return; } // back out of the clip to the current photo
+  go(-1, 'prev');
 }
 
 function updateEmpty() {
@@ -431,7 +519,7 @@ document.addEventListener('pointerdown', (e) => {
   }
   touch = { x: e.clientX, y: e.clientY, moved: false };
   clearTimeout(pressTimer);
-  pressTimer = setTimeout(() => { if (touch && !touch.moved) { touch = null; showQr(); } }, 900);
+  pressTimer = setTimeout(() => { if (touch && !touch.moved && !S.clip) { touch = null; showQr(); } }, 900);
 });
 
 document.addEventListener('pointermove', (e) => {
@@ -446,7 +534,7 @@ document.addEventListener('pointerup', (e) => {
   if (!touch) return;
   const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
   touch = null;
-  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) go(dx < 0 ? 1 : -1, dx < 0 ? 'next' : 'prev');
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) (dx < 0 ? swipeNext() : swipePrev());
 });
 
 document.addEventListener('pointercancel', () => { touch = null; clearTimeout(pressTimer); });
@@ -457,8 +545,8 @@ document.querySelectorAll('img').forEach((img) => (img.draggable = false));
 // keyboard shortcuts for testing on a computer
 document.addEventListener('keydown', (e) => {
   if (Wifi.isOpen()) { if (e.key === 'Escape') Wifi.close(true); return; }
-  if (e.key === 'ArrowRight') go(1, 'next');
-  else if (e.key === 'ArrowLeft') go(-1, 'prev');
+  if (e.key === 'ArrowRight') swipeNext();
+  else if (e.key === 'ArrowLeft') swipePrev();
   else if (e.key === 'q') showQr();
   else if (e.key === 'w') Wifi.open(false);
 });

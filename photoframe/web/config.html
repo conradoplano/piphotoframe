@@ -79,6 +79,28 @@
         <input type="time" data-path="sync_time">
       </label>
     </div>
+    <h3>Short videos</h3>
+    <p class="note">Videos in your albums are not shown like photos. Instead, when someone swipes
+      to the next photo, the frame first plays one of them (muted), then shows the next photo. Swiping
+      again during a video skips it. Optionally, videos also play between photos in the normal
+      slideshow. Videos longer than one minute are always ignored.
+      <span id="clip-count"></span></p>
+    <label class="check"><input type="checkbox" data-path="clips_enabled"> Play a short video when swiping to the next photo</label>
+    <label class="check"><input type="checkbox" data-path="clips_in_slideshow"> Also play videos between photos in the slideshow</label>
+    <div class="grid">
+      <label>Play each video for at most (seconds)
+        <input type="number" min="3" max="60" step="1" data-path="clip_max_seconds">
+      </label>
+      <label>Videos longer than that
+        <select data-path="clip_long">
+          <option value="trim">Play only the beginning</option>
+          <option value="skip">Don't use them</option>
+        </select>
+      </label>
+      <label>At most one video every (seconds, swipes and slideshow together)
+        <input type="number" min="0" max="3600" step="5" data-path="clip_pause_seconds">
+      </label>
+    </div>
   </section>
 
   <section class="card">

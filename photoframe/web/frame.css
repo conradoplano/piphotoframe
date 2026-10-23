@@ -32,6 +32,15 @@ html.embedded, html.embedded * { cursor: auto !important; } /* dev preview: keep
   object-fit: cover; opacity: 0; will-change: opacity, transform;
 }
 
+/* ---- short video played when swiping to the next photo ---- */
+#clip {
+  position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000;
+  opacity: 0; pointer-events: none; transition: opacity .6s ease;
+}
+body.clip #clip { opacity: 1; }
+#overlay, #offline { transition: opacity .6s ease; }
+body.clip #overlay, body.clip #offline { opacity: 0; }
+
 /* ---- clock & weather overlay ---- */
 #overlay {
   position: fixed; left: 0; right: 0; bottom: 0;

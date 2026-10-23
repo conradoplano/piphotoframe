@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from datetime import datetime, timedelta
 
@@ -11,13 +12,23 @@ from .config import Config, ConfigStore
 from .library import PhotoLibrary, album_key
 from .render import validate_image
 from .state import RuntimeState
-from .synology import SynologyShare, SynoPhoto
+from .synology import SynologyShare, SynoPhoto, SynoVideo
 
 log = logging.getLogger(__name__)
 
 MAX_PHOTOS = 5000        # newest photos win if the albums hold more than this
 DOWNLOAD_PARALLEL = 4
 COMMIT_EVERY = 20        # publish partial progress so a first sync shows photos quickly
+
+
+CLIP_SOURCE_MAX_SECONDS = 60  # longer videos are never downloaded, even to be trimmed
+
+
+def wanted_clip(duration: float, cfg: Config) -> bool:
+    """Whether a video becomes a clip. Longer ones are trimmed when played, or skipped."""
+    if not cfg.clips_enabled or not 0 < duration <= CLIP_SOURCE_MAX_SECONDS:
+        return False
+    return cfg.clip_long == "trim" or duration <= cfg.clip_max_seconds + 0.5
 
 
 def next_daily(hhmm: str, now: datetime | None = None) -> datetime:
@@ -113,13 +124,15 @@ class Syncer:
         albums = [a for a in cfg.albums if a.enabled]
         wanted: dict[str, dict] = {}
         fetch: dict[str, list[tuple[str, SynoPhoto]]] = {}
+        wanted_clips: dict[str, dict] = {}
+        clip_fetch: dict[str, list[tuple[str, SynoVideo]]] = {}
 
         for album in albums:
             self.status["progress"] = f"Reading album {album.name or album.url}"
             akey = album_key(album.url)
             try:
                 async with SynologyShare(album.url, album.password, cfg.verify_tls) as share:
-                    photos = await share.list_photos()
+                    photos, videos = await share.list_media()
             except Exception as e:
                 log.warning("Album %s failed: %s", album.url, e)
                 prev = lib.albums.get(album.url, {})
@@ -127,7 +140,15 @@ class Syncer:
                                          "error": str(e), "checked": time.time()}
                 # Keep what we already have from this album rather than wiping it.
                 wanted.update({k: v for k, v in lib.photos.items() if v.get("album") == album.url})
+                wanted_clips.update({k: v for k, v in lib.clips.items() if v.get("album") == album.url})
                 continue
+            for v in videos:
+                if wanted_clip(v.duration, cfg):
+                    key = f"{akey}_{v.unit_id}"
+                    wanted_clips[key] = {"album": album.url, "unit_id": v.unit_id,
+                                         "cache_key": v.cache_key, "duration": v.duration,
+                                         "taken": v.taken, "filename": v.filename}
+                    clip_fetch.setdefault(album.url, []).append((key, v))
             lib.albums[album.url] = {"ok": True, "count": len(photos), "error": None,
                                      "checked": time.time()}
             for p in photos:
@@ -190,6 +211,35 @@ class Syncer:
                 log.warning("Downloading from %s failed: %s", url, e)
                 lib.albums[url]["error"] = str(e)
 
+        await self._sync_clips(cfg, album_cfg, wanted_clips, clip_fetch)
+
         lib.last_sync = time.time()
         lib.commit()
-        log.info("Sync finished: %d photos (%d downloaded)", len(lib.photos), len(todo))
+        log.info("Sync finished: %d photos (%d downloaded), %d clips",
+                 len(lib.photos), len(todo), len(lib.clips))
+
+    async def _sync_clips(self, cfg: Config, album_cfg: dict, wanted: dict[str, dict],
+                          fetch: dict[str, list[tuple[str, SynoVideo]]]) -> None:
+        lib = self.library
+        for key in [k for k in lib.clips if k not in wanted]:
+            lib.remove_clip(key)
+        todo = [(url, key, v) for url, items in fetch.items() for key, v in items
+                if not (key in lib.clips and lib.clips[key].get("cache_key") == v.cache_key
+                        and lib.clip_path(key).exists())]
+        for key in wanted:
+            if key in lib.clips:
+                lib.clips[key] = wanted[key]
+        for n, (url, key, v) in enumerate(todo, 1):
+            self.status["progress"] = f"Downloading videos {n}/{len(todo)}"
+            a = album_cfg[url]
+            tmp = lib.clip_path(key).with_suffix(".part")
+            try:
+                async with SynologyShare(url, a.password, cfg.verify_tls) as share:
+                    with open(tmp, "wb") as f:
+                        await share.download_video(v, f)
+                os.replace(tmp, lib.clip_path(key))
+                lib.clips[key] = wanted[key]
+            except Exception as e:
+                log.warning("Video download of %s failed: %s", v.filename or key, e)
+                tmp.unlink(missing_ok=True)
+        lib.commit()

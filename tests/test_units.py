@@ -7,8 +7,8 @@ from photoframe.brightness import compute_target, night_active, wake_brightness
 from photoframe.config import Brightness, Config, Night
 from photoframe.network import split_terse
 from photoframe.render import compose
-from photoframe.sync import next_daily
-from photoframe.synology import _to_photo, parse_share_url
+from photoframe.sync import next_daily, wanted_clip
+from photoframe.synology import _to_photo, _to_video, parse_share_url
 
 
 @pytest.mark.parametrize("url, origin, prefix, passphrase", [
@@ -31,6 +31,7 @@ def test_old_config_gets_forecast_default():
     # config files saved before the setting existed keep showing the forecast
     old = Config.model_validate({"units": "C"})
     assert old.show_forecast is True and old.show_main_city is True
+    assert old.clips_in_slideshow is False  # videos between photos only when asked for
 
 
 def test_config_from_before_layout_by_city_count_still_loads():
@@ -51,6 +52,28 @@ def test_to_photo():
     assert p.unit_id == 7 and p.size == "xl" and p.cache_key == "7_1"
     assert _to_photo({**item, "type": "video"}) is None
     assert _to_photo({**item, "additional": {"thumbnail": {"cache_key": "7_1", "xl": "broken", "m": "broken"}}}) is None
+
+
+def test_to_video():
+    item = {"id": 9, "filename": "v.mp4", "time": 50, "type": "video",
+            "additional": {"thumbnail": {"cache_key": "9_1", "unit_id": 9},
+                           "video_meta": {"duration": 9000},
+                           "video_convert": [{"quality": "high"}], "video_convert_status": "ready"}}
+    v = _to_video(item)
+    assert v.unit_id == 9 and v.duration == 9.0
+    assert _to_video({**item, "type": "photo"}) is None
+    # without Synology's 720p conversion the Pi could not play it smoothly
+    assert _to_video({**item, "additional": {**item["additional"], "video_convert": []}}) is None
+
+
+def test_wanted_clip():
+    trim = Config(clip_max_seconds=10, clip_long="trim")
+    skip = Config(clip_max_seconds=10, clip_long="skip")
+    assert wanted_clip(9, trim) and wanted_clip(9, skip)
+    assert wanted_clip(36, trim) and not wanted_clip(36, skip)
+    assert not wanted_clip(90, trim)  # over a minute: never downloaded
+    assert not wanted_clip(0, trim)   # unknown length
+    assert not wanted_clip(9, Config(clips_enabled=False))
 
 
 def test_brightness_curve():

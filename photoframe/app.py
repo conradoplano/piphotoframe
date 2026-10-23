@@ -91,8 +91,9 @@ def create_app(settings: Settings) -> FastAPI:
     updater = Updater(can_restart=not settings.dev)
 
     def on_config_change(old: Config, new: Config) -> None:
+        clip_settings = lambda c: (c.clips_enabled, c.clip_long, c.clip_max_seconds)  # noqa: E731
         if [a.model_dump() for a in old.albums] != [a.model_dump() for a in new.albums] \
-                or old.verify_tls != new.verify_tls:
+                or old.verify_tls != new.verify_tls or clip_settings(old) != clip_settings(new):
             syncer.request_sync()
         elif old.sync_time != new.sync_time:
             syncer.reschedule()
@@ -118,7 +119,7 @@ def create_app(settings: Settings) -> FastAPI:
     @app.middleware("http")
     async def no_stale_pages(request: Request, call_next):
         response = await call_next(request)
-        if not request.url.path.startswith("/photos/"):
+        if not request.url.path.startswith(("/photos/", "/clips/")):
             response.headers.setdefault("Cache-Control", "no-cache")
         return response
 
@@ -159,6 +160,7 @@ def create_app(settings: Settings) -> FastAPI:
             "config_version": store.version,
             "photos_version": library.version,
             "photo_count": len(library.photos),
+            "clip_count": len(library.clips),
             "online": state.online,
             "ssid": state.ssid,
             "needs_wifi": state.needs_wifi,
@@ -184,7 +186,16 @@ def create_app(settings: Settings) -> FastAPI:
             "order": cfg.order,
             "items": [{"id": k, "url": f"/photos/{k}.jpg?fit={cfg.fit_mode}&v={m['cache_key']}"}
                       for k, m in library.ordered(cfg.order)],
+            "clips": [{"id": k, "url": f"/clips/{k}.mp4?v={m['cache_key']}", "duration": m["duration"]}
+                      for k, m in library.clips.items()] if cfg.clips_enabled else [],
         }
+
+    @app.get("/clips/{key}.mp4", include_in_schema=False)
+    async def clip(key: str):
+        if key not in library.clips:
+            raise HTTPException(404)
+        return FileResponse(library.clip_path(key), media_type="video/mp4",
+                            headers={"Cache-Control": "public, max-age=86400"})
 
     @app.get("/photos/{key}.jpg", include_in_schema=False)
     async def photo(key: str, fit: str | None = None):

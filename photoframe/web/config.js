@@ -229,7 +229,9 @@ async function refreshState() {
   const conn = $('#conn');
   conn.textContent = state.online ? `Online${state.ssid ? ' · ' + state.ssid : ''}` : 'Offline';
   conn.className = 'pill ' + (state.online ? 'ok' : 'bad');
-  $('#st-photos').textContent = state.photo_count;
+  $('#st-photos').textContent = state.photo_count + (state.clip_count ? ` + ${state.clip_count} videos` : '');
+  $('#clip-count').textContent = state.clip_count
+    ? `${state.clip_count} video${state.clip_count > 1 ? 's' : ''} ready.` : 'No videos found in the albums yet.';
   $('#st-last').textContent = ago(state.sync.last_sync);
   $('#st-next').textContent = state.sync.next_run
     ? new Date(state.sync.next_run * 1000).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '–';

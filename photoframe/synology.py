@@ -63,6 +63,34 @@ class SynoPhoto:
     height: int
 
 
+@dataclass
+class SynoVideo:
+    unit_id: int
+    cache_key: str
+    filename: str
+    taken: int
+    duration: float  # seconds
+
+
+def _to_video(item: dict) -> SynoVideo | None:
+    """Videos that Synology has already converted to 720p H.264 (playable on the Pi)."""
+    if item.get("type") != "video":
+        return None
+    extra = item.get("additional") or {}
+    thumb = extra.get("thumbnail") or {}
+    converted = any(c.get("quality") == "high" for c in extra.get("video_convert") or [])
+    if not converted or extra.get("video_convert_status", "ready") != "ready":
+        return None
+    meta = extra.get("video_meta") or {}
+    return SynoVideo(
+        unit_id=int(thumb.get("unit_id") or item["id"]),
+        cache_key=str(thumb.get("cache_key") or item["id"]),
+        filename=item.get("filename", ""),
+        taken=int(item.get("time") or 0),
+        duration=float(meta.get("duration") or 0) / 1000,
+    )
+
+
 def _q(value: str) -> str:
     """The Photos web API expects string parameters JSON-encoded (with quotes)."""
     return json.dumps(value)
@@ -128,7 +156,8 @@ class SynologyShare:
             "offset": str(offset), "limit": str(limit),
             "sort_by": _q("takentime"), "sort_direction": _q("desc"),
             "passphrase": _q(self.ref.passphrase),
-            "additional": json.dumps(["thumbnail", "resolution", "orientation"]),
+            "additional": json.dumps(["thumbnail", "resolution", "orientation",
+                                      "video_meta", "video_convert"]),
         }
 
     async def _connect(self) -> str:
@@ -162,17 +191,37 @@ class SynologyShare:
         hint = " (wrong password?)" if self.password else " (is the album shared publicly, or password protected?)"
         raise SynologyError(f"Could not open album: {errors[-1] if errors else 'unknown error'}{hint}")
 
-    async def list_photos(self) -> list[SynoPhoto]:
+    async def list_media(self) -> tuple[list[SynoPhoto], list[SynoVideo]]:
         endpoint = await self._connect()
         photos: list[SynoPhoto] = []
+        videos: list[SynoVideo] = []
         offset = 0
         while True:
             data = await self._post(endpoint, self._list_params(offset, PAGE_SIZE))
             items = data.get("list") or []
             photos.extend(p for p in map(_to_photo, items) if p)
+            videos.extend(v for v in map(_to_video, items) if v)
             if len(items) < PAGE_SIZE:
-                return photos
+                return photos, videos
             offset += PAGE_SIZE
+
+    async def list_photos(self) -> list[SynoPhoto]:
+        return (await self.list_media())[0]
+
+    async def download_video(self, video: SynoVideo, dst) -> None:
+        """Stream Synology's 720p conversion of the video into the file `dst` (opened for writing)."""
+        endpoint = await self._connect()
+        params = {
+            "api": "SYNO.Foto.Streaming", "method": "streaming", "version": "1",
+            "id": str(video.unit_id), "quality": _q("high"),
+            "passphrase": _q(self.ref.passphrase), "_sharing_id": _q(self.ref.passphrase),
+        }
+        async with self._client.stream("GET", endpoint, params=params, timeout=120) as r:
+            if r.status_code not in (200, 206) or not r.headers.get("content-type", "").startswith("video/"):
+                raise SynologyError(f"Video download failed for {video.filename or video.unit_id}: "
+                                    f"HTTP {r.status_code} {r.headers.get('content-type', '')}")
+            async for chunk in r.aiter_bytes(1 << 16):
+                dst.write(chunk)
 
     async def download(self, photo: SynoPhoto) -> bytes:
         endpoint = await self._connect()
