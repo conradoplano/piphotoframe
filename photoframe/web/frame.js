@@ -151,15 +151,25 @@ function formatter(tz, opts) {
 
 function timeHtml(tz) {
   const h24 = S.config.clock_24h;
-  const parts = formatter(tz, { hour: h24 ? '2-digit' : 'numeric', minute: '2-digit', hourCycle: h24 ? 'h23' : 'h12' })
+  const parts = formatter(tz, { hour: 'numeric', minute: '2-digit', hourCycle: h24 ? 'h23' : 'h12' })
     .formatToParts(new Date());
-  const main = parts.filter((p) => p.type !== 'dayPeriod').map((p) => p.value).join('').trim();
-  const period = parts.find((p) => p.type === 'dayPeriod');
-  return period ? `${esc(main)}<small>${esc(period.value)}</small>` : esc(main);
+  // "9:05", not "09:05" (some languages pad the hour even when asked not to)
+  const main = parts.filter((p) => p.type !== 'dayPeriod').map((p) => p.value).join('').trim()
+    .replace(/^0(\d)/, '$1');
+  if (h24) return esc(main);
+  // Always "AM"/"PM", whatever the language would write ("a. m.", "vorm.", …).
+  const hour = Number(formatter(tz, { hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
+  return `${esc(main)}<small>${hour < 12 ? 'AM' : 'PM'}</small>`;
 }
 
+// Long date, e.g. "Friday, October 23" / "Viernes, 23 de Octubre". Day and month names are
+// capitalised even in languages that write them in lowercase (Spanish, French, …).
 function dateText(tz) {
-  return formatter(tz, { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date());
+  const cap = (s) => s.charAt(0).toLocaleUpperCase(S.config.language || 'en') + s.slice(1);
+  return formatter(tz, { weekday: 'long', day: 'numeric', month: 'long' })
+    .formatToParts(new Date())
+    .map((p) => (p.type === 'weekday' || p.type === 'month' ? cap(p.value) : p.value))
+    .join('');
 }
 
 function dayName(isoDate) {
@@ -182,7 +192,7 @@ function renderOverlay() {
   const cities = (S.weather && S.weather.cities) || [];
   const cfgCities = S.config.cities;
   let html;
-  if (S.config.weather_mode === 'multi' && cfgCities.length) {
+  if (cfgCities.length > 1) {
     // The first city is the main one: large, with the date. The others sit below it, smaller,
     // one on the left and one on the right. Each reads: name, time, weather.
     const now = (i) => {
@@ -194,7 +204,8 @@ function renderOverlay() {
       <div class="main">
         <div class="clock">
           <div class="time" data-clock="${esc(main.timezone)}"></div>
-          <div class="date">${S.config.show_date ? `<span data-date="${esc(main.timezone)}"></span> · ` : ''}${esc(main.name)}</div>
+          ${S.config.show_date ? `<div class="date" data-date="${esc(main.timezone)}"></div>` : ''}
+          ${S.config.show_main_city ? `<div class="city">${esc(main.name)}</div>` : ''}
         </div>
         <div class="weather">
           <div class="now">${now(0)}</div>
@@ -215,8 +226,8 @@ function renderOverlay() {
     html = `<div class="forecast">
       <div class="clock">
         <div class="time" data-clock="${esc(tz)}"></div>
-        ${S.config.show_date || c ? `<div class="date">${S.config.show_date ? `<span data-date="${esc(tz)}"></span>` : ''}${
-          S.config.show_date && c ? ' · ' : ''}${c ? esc(c.name) : ''}</div>` : ''}
+        ${S.config.show_date ? `<div class="date" data-date="${esc(tz)}"></div>` : ''}
+        ${c && S.config.show_main_city ? `<div class="city">${esc(c.name)}</div>` : ''}
       </div>
       <div class="weather">
         ${cur ? `<div class="now">${Icons.weather(cur.code, cur.is_day)}<span>${temp(cur.temp)}</span></div>` : ''}
@@ -225,6 +236,7 @@ function renderOverlay() {
     </div>`;
   }
   $('#overlay').innerHTML = html;
+  $('#overlay').classList.toggle('no-forecast', !S.config.show_forecast);
   tick();
 }
 

@@ -3,9 +3,9 @@
 A digital photo frame for a Raspberry Pi 4 with the Waveshare 10.1" DSI touch display (800×1280, portrait).
 
 - Shows photos from one or more **Synology Photos shared albums**, synced once a day.
-- Clock in the bottom-left corner and weather in the bottom-right, using Open-Meteo (no API key needed). Two layouts:
-  - **one city**: current weather plus a 3-day forecast
-  - **three cities**: city name, local time and current weather on one line each
+- Clock in the bottom-left corner and weather in the bottom-right, using Open-Meteo (no API key needed). The layout follows the number of cities:
+  - **one city**: large clock, date, current weather and an optional 3-day forecast
+  - **two or three cities**: the first city as above, with the others smaller below it (local time and current weather each)
 - Swipe left or right to change photos. Long-press to show a QR code that opens the settings page.
 - Screen brightness follows the room light (BH1750 or VEML7700 sensor). There is also an optional night schedule that turns the screen off.
 - If no Wi-Fi is configured, the frame shows a network list and an on-screen keyboard. If the connection drops, the slideshow keeps running from the local cache until the next daily sync.

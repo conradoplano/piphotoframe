@@ -51,7 +51,6 @@ function renderFields() {
     else el.value = v;
   });
   $$('output[data-for]').forEach((o) => (o.textContent = getPath(cfg, o.dataset.for) + '%'));
-  $$('input[name=wmode]').forEach((r) => (r.checked = r.value === cfg.weather_mode));
   const s = cfg.slide_seconds;
   const unit = s % 3600 === 0 ? 3600 : s % 60 === 0 ? 60 : 1;
   $('#dur-unit').value = String(unit);
@@ -70,15 +69,9 @@ function bindFields() {
       else v = el.value;
       setPath(cfg, el.dataset.path, v);
       renderFields();
-      if (el.dataset.path === 'weather_mode') renderCities();
       changed();
     });
   });
-  $$('input[name=wmode]').forEach((r) => r.addEventListener('change', () => {
-    cfg.weather_mode = r.value;
-    renderCities();
-    changed();
-  }));
   const dur = () => {
     const n = Math.max(1, Math.round(Number($('#dur-value').value) || 1));
     cfg.slide_seconds = Math.max(5, n * Number($('#dur-unit').value));
@@ -164,12 +157,8 @@ $('#album-add').addEventListener('submit', (e) => {
 /* ---------- cities ---------- */
 
 function renderCities() {
-  const multi = cfg.weather_mode === 'multi';
-  $('#cities-note').textContent = multi
-    ? 'Up to three cities, each with its own local time and current weather. The first one is shown large; use ↑ to choose it.'
-    : 'The first city is used for the clock (its time zone) and the forecast.';
   const list = $('#cities');
-  list.innerHTML = cfg.cities.map((c, i) => `<li class="${!multi && i > 0 ? 'unused' : ''}">
+  list.innerHTML = cfg.cities.map((c, i) => `<li>
       <span class="name">${esc(c.name)}<small>${esc([c.country, c.timezone].filter(Boolean).join(' · '))}</small></span>
       <button type="button" data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
       <button type="button" data-del="${i}" aria-label="Remove">✕</button>

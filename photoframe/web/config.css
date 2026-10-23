@@ -67,17 +67,10 @@ summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .a-more { margin-top: 0; }
 .a-more input { margin-top: 6px; }
 
-.segmented { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.segmented label { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 14px; }
-.segmented label + label { border-left: 1px solid var(--line); }
-.segmented input { position: absolute; opacity: 0; pointer-events: none; }
-.segmented label:has(input:checked) { background: var(--accent); color: var(--accent-fg); }
-
 #cities { list-style: none; padding: 0; margin: 10px 0; }
 #cities li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; }
 #cities li .name { flex: 1; min-width: 0; }
 #cities li .name small { color: var(--muted); display: block; }
-#cities li.unused { opacity: .5; }
 #cities li button { padding: 4px 9px; }
 .search { position: relative; }
 #city-results {
@@ -105,6 +98,4 @@ summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 @media (max-width: 520px) {
   .album { flex-direction: column; }
   .album-side { flex-direction: row; align-items: center; }
-  .segmented { flex-direction: column; }
-  .segmented label + label { border-left: 0; border-top: 1px solid var(--line); }
 }

@@ -29,7 +29,13 @@ def test_parse_share_url_rejects(url):
 
 def test_old_config_gets_forecast_default():
     # config files saved before the setting existed keep showing the forecast
-    assert Config.model_validate({"units": "C"}).show_forecast is True
+    old = Config.model_validate({"units": "C"})
+    assert old.show_forecast is True and old.show_main_city is True
+
+
+def test_config_from_before_layout_by_city_count_still_loads():
+    # the old "weather_mode" choice is gone (the number of cities decides); old files must still load
+    assert Config.model_validate({"weather_mode": "multi"}).cities == []
 
 
 def test_config_rejects_bad_album():

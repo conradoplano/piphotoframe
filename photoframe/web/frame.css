@@ -43,54 +43,60 @@ html.embedded, html.embedded * { cursor: auto !important; } /* dev preview: keep
 }
 .icon { width: 1em; height: 1em; display: inline-block; vertical-align: middle; filter: drop-shadow(var(--shadow)); }
 
-.forecast { display: flex; justify-content: space-between; align-items: flex-end; gap: 4vw; }
-.forecast .time { font-size: 15vw; font-weight: 300; line-height: .95; letter-spacing: -.04em; }
-.forecast .time small, .multi .time small { font-size: .32em; font-weight: 500; margin-left: .25em; letter-spacing: 0; }
-.forecast .date { font-size: 3.6vw; font-weight: 500; margin-top: 1.4vw; opacity: .92; }
-.forecast .weather { text-align: right; }
-.forecast .now { display: flex; align-items: center; justify-content: flex-end; gap: 1.5vw; font-size: 9vw; font-weight: 300; line-height: 1; }
-.forecast .now .icon { font-size: 10vw; }
-.forecast .days { display: flex; gap: 3.2vw; margin-top: 2.6vw; justify-content: flex-end; }
-.forecast .day { display: flex; flex-direction: column; align-items: center; gap: .6vw; font-size: 3vw; }
-.forecast .day .icon { font-size: 6vw; }
-.forecast .day .lo { opacity: .65; margin-left: .6vw; }
-.forecast .dow { font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 2.6vw; opacity: .9; }
+/* One small type scale for the whole overlay, shared by both layouts. Icons are 1em, so they
+   always match the text next to them. */
+#overlay {
+  --t-clock: 15vw;   /* main clock */
+  --t-temp: 8.5vw;   /* main temperature */
+  --t-mid: 6vw;      /* secondary clocks and temperatures, forecast icons */
+  --t-text: 3.8vw;   /* date, forecast temperatures */
+  --t-label: 2.7vw;  /* city names, weekday labels */
+}
+/* without the forecast, the main temperature has room to match the clock's visual weight */
+#overlay.no-forecast { --t-temp: 12vw; }
+.time { font-weight: 300; line-height: 1; letter-spacing: -.03em; }
+.time small { font-size: .32em; font-weight: 500; margin-left: .25em; letter-spacing: 0; }
+.city { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.multi { display: flex; flex-direction: column; gap: 2.4vw; }
-/* main city: large, like the one-city layout */
+/* main city: the one-city layout, and the large city of the three-city layout */
+.forecast, .multi .main { display: flex; justify-content: space-between; align-items: flex-end; gap: 4vw; }
+/* the clock column takes the free space (a long date wraps there); the weather keeps its width */
+.forecast .clock, .multi .main .clock { flex: 1 1 auto; min-width: 0; }
+.forecast .weather, .multi .main .weather { flex: none; }
+.forecast .time, .multi .main .time { font-size: var(--t-clock); line-height: .95; letter-spacing: -.04em; }
+.forecast .date, .multi .main .date { font-size: var(--t-text); font-weight: 500; margin-top: 1.4vw; }
+.forecast .city, .multi .main .city { font-size: var(--t-label); opacity: .85; margin-top: .6vw; }
+.forecast .weather, .multi .main .weather { text-align: right; }
+/* without the forecast, the (larger) temperature lines up with the bottom of the clock digits,
+   not with the date below them: start at the top, then move down by the height difference */
+#overlay.no-forecast .forecast, #overlay.no-forecast .multi .main { align-items: flex-start; }
+#overlay.no-forecast .forecast .weather, #overlay.no-forecast .multi .main .weather {
+  margin-top: calc(var(--t-clock) * .95 - var(--t-temp));
+}
+.now { display: flex; align-items: center; justify-content: flex-end; gap: 1.5vw;
+       font-size: var(--t-temp); font-weight: 300; line-height: 1; }
+
+/* next three days, under the main temperature */
+.days { display: flex; gap: 3vw; margin-top: 2.2vw; justify-content: flex-end; }
+.day { display: flex; flex-direction: column; align-items: center; gap: .6vw; font-size: var(--t-text); }
+.day .icon { font-size: var(--t-mid); }
+.day .lo { opacity: .65; margin-left: .5vw; }
+.dow { font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: var(--t-label); opacity: .9; }
+
+/* three-city layout: the other cities, smaller, left and right below the main one */
 .multi { display: flex; flex-direction: column; gap: 3.5vw; }
-.multi .city { font-weight: 500; opacity: .95; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.multi .main { display: flex; justify-content: space-between; align-items: flex-end; gap: 4vw; }
-.multi .main .clock { min-width: 0; }
-.multi .main .time { font-size: 15vw; font-weight: 300; line-height: .95; letter-spacing: -.04em; }
-.multi .main .date { font-size: 3.4vw; font-weight: 500; margin-top: 1.2vw; opacity: .9; }
-.multi .main .weather { text-align: right; }
-.multi .main .now { display: flex; align-items: center; justify-content: flex-end; gap: 1.5vw; font-size: 10vw; font-weight: 300; line-height: 1; }
-.multi .main .now .icon { font-size: 11vw; }
-/* small 3-day forecast under the main city's temperature */
-.multi .main .days { display: flex; gap: 3vw; margin-top: 1.8vw; justify-content: flex-end; }
-.multi .main .day { display: flex; flex-direction: column; align-items: center; gap: .4vw; font-size: 2.6vw; }
-.multi .main .day .icon { font-size: 4.6vw; }
-.multi .main .day .lo { opacity: .65; margin-left: .5vw; }
-.multi .main .dow { font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 2.2vw; opacity: .9; }
-
-/* the other cities: smaller, side by side below the main one (left / right) */
 .multi .others {
   display: grid; grid-template-columns: 1fr 1fr; column-gap: 6vw;
   padding-top: 3vw; border-top: 1px solid rgba(255, 255, 255, .25);
 }
 .multi .other { min-width: 0; }
 .multi .other:nth-child(2) { text-align: right; }
-.multi .other .city { font-size: 3.4vw; opacity: .9; margin-top: 1vw; }
 .multi .other .line { display: flex; align-items: center; gap: 5vw; }
-.multi .other .time[hidden] { display: none; }
 .multi .other:nth-child(2) .line { justify-content: flex-end; }
-/* clock and temperature share one size */
-.multi .other { --other-size: 6.2vw; }
-.multi .other .time { font-size: var(--other-size); font-weight: 300; line-height: 1; letter-spacing: -.03em; }
-.multi .other .weather { display: flex; align-items: center; gap: 1.4vw; font-size: var(--other-size); font-weight: 300; line-height: 1; }
-.multi .other .weather .icon { font-size: calc(var(--other-size) * .9); }
-.multi .weather .icon { font-size: 7.5vw; }
+.multi .other .time { font-size: var(--t-mid); }
+.multi .other .time[hidden] { display: none; }
+.multi .other .weather { display: flex; align-items: center; gap: 1.4vw; font-size: var(--t-mid); font-weight: 300; line-height: 1; }
+.multi .other .city { font-size: var(--t-label); opacity: .85; margin-top: 1vw; }
 
 #offline {
   position: fixed; top: 3vw; right: 3vw; font-size: 4.5vw; opacity: .7;

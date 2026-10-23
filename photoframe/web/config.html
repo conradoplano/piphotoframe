@@ -83,11 +83,8 @@
 
   <section class="card">
     <h2>Clock &amp; weather</h2>
-    <div class="segmented" role="radiogroup">
-      <label><input type="radio" name="wmode" value="forecast"> One city · 3-day forecast</label>
-      <label><input type="radio" name="wmode" value="multi"> Three cities · now</label>
-    </div>
-    <p class="note" id="cities-note"></p>
+    <p class="note">Add one city for a single clock, or up to three. The first city is the main one:
+      shown large, with the date and forecast. Use ↑ to change which city is first.</p>
     <ol id="cities"></ol>
     <div class="search">
       <input id="city-q" type="search" placeholder="Add a city…" autocomplete="off">
@@ -114,6 +111,7 @@
       <label class="check"><input type="checkbox" data-path="clock_24h"> 24-hour clock</label>
       <label class="check"><input type="checkbox" data-path="show_date"> Show date</label>
       <label class="check"><input type="checkbox" data-path="show_forecast"> Show the next 3 days' forecast</label>
+      <label class="check"><input type="checkbox" data-path="show_main_city"> Show the main city's name</label>
     </div>
   </section>
 

@@ -61,12 +61,12 @@ class Config(BaseModel):
     fit_mode: Literal["blur", "cover", "contain"] = "blur"
     transition: Literal["fade", "none"] = "fade"
     sync_time: str = Field("03:00", pattern=HHMM)
-    weather_mode: Literal["forecast", "multi"] = "forecast"
     cities: list[City] = Field(default_factory=list, max_length=3)
     units: Literal["C", "F"] = "C"
     clock_24h: bool = True
     show_date: bool = True
     show_forecast: bool = True  # next three days under the (main) city's weather
+    show_main_city: bool = True  # name of the main city under the date
     language: str = "en"
     brightness: Brightness = Field(default_factory=Brightness)
     night: Night = Field(default_factory=Night)
