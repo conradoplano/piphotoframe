@@ -59,14 +59,18 @@ details { margin-top: 14px; }
 summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 
 .add-row { display: flex; gap: 8px; margin-top: 12px; }
-.album { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
-.album:first-child { border-top: 0; padding-top: 0; }
-.album-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.album-main .a-name { font-weight: 600; }
-.album-side { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
-.album.off .album-main { opacity: .55; }
-.a-more { margin-top: 0; }
-.a-more input { margin-top: 6px; }
+/* one album = a small card: name + On, link, (password), then status and actions */
+.album {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 10px;
+}
+.album-head { display: flex; align-items: center; gap: 12px; }
+.album-head .a-name { flex: 1; min-width: 0; font-weight: 600; }
+.album-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.album-foot .a-status { margin: 0; flex: 1; min-width: 12em; }
+.album-actions { display: flex; gap: 6px; }
+.album.off .a-name, .album.off .a-url, .album.off .a-status { opacity: .55; }
+button.small { padding: 5px 10px; font-size: 13px; }
 
 #cities { list-style: none; padding: 0; margin: 10px 0; }
 #cities li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; }
@@ -96,7 +100,3 @@ summary { cursor: pointer; color: var(--muted); font-size: 13px; }
   background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 99px; font-size: 14px;
 }
 
-@media (max-width: 520px) {
-  .album { flex-direction: column; }
-  .album-side { flex-direction: row; align-items: center; }
-}

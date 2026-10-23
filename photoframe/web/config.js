@@ -125,7 +125,12 @@ function renderAlbums() {
     bind('.a-url', 'url');
     bind('.a-pass', 'password');
     bind('.a-enabled', 'enabled', 'checked');
-    if (album.password) $('.a-more', node).open = true;
+    const pass = $('.a-pass', node);
+    pass.classList.toggle('hidden', !album.password); // shown only when the share needs one
+    $('.a-pass-toggle', node).addEventListener('click', () => {
+      pass.classList.toggle('hidden');
+      if (!pass.classList.contains('hidden')) pass.focus();
+    });
     const status = $('.a-status', node);
     const [text, cls] = albumStatus(album.url);
     status.textContent = text;

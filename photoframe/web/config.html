@@ -218,18 +218,19 @@
 
 <template id="album-tpl">
   <div class="album">
-    <div class="album-main">
-      <input class="a-name" placeholder="Name (optional)">
-      <input class="a-url" type="url">
-      <details class="a-more"><summary>Password</summary>
-        <input class="a-pass" type="password" placeholder="Only for password-protected shares" autocomplete="off">
-      </details>
-      <p class="a-status note"></p>
-    </div>
-    <div class="album-side">
+    <div class="album-head">
+      <input class="a-name" placeholder="Album name (optional)">
       <label class="check"><input type="checkbox" class="a-enabled"> On</label>
-      <button type="button" class="a-test ghost">Test</button>
-      <button type="button" class="a-del ghost" aria-label="Remove album">Remove</button>
+    </div>
+    <input class="a-url" type="url" aria-label="Share link">
+    <input class="a-pass hidden" type="password" placeholder="Password (only for password-protected shares)" autocomplete="off">
+    <div class="album-foot">
+      <p class="a-status note"></p>
+      <div class="album-actions">
+        <button type="button" class="a-pass-toggle ghost small">Password</button>
+        <button type="button" class="a-test ghost small">Test</button>
+        <button type="button" class="a-del ghost small danger" aria-label="Remove album">Remove</button>
+      </div>
     </div>
   </div>
 </template>
