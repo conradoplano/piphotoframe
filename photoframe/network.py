@@ -40,14 +40,6 @@ async def _run(*args: str, timeout: float = 45) -> tuple[int, str, str]:
     return proc.returncode or 0, out.decode(errors="replace"), err.decode(errors="replace")
 
 
-class NmcliWifi:
-    async def status(self) -> WifiStatus:
-        rc, out, _ = await _run("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device")
-        if rc != 0:
-            return WifiStatus(False, False, None)
-        return parse_device_status(out)
-
-
 def parse_device_status(out: str) -> WifiStatus:
     """Online through Wi-Fi or a network cable (the Pi's Ethernet port works as a fallback)."""
     rows = [r for r in (split_terse(l) for l in out.splitlines() if l) if len(r) >= 4]
@@ -58,6 +50,14 @@ def parse_device_status(out: str) -> WifiStatus:
             return WifiStatus(True, True, r[3] or None)
     wired = any(r[1] == "ethernet" and connected(r) for r in rows)
     return WifiStatus(bool(wifi), wired, "cable" if wired else None)
+
+
+class NmcliWifi:
+    async def status(self) -> WifiStatus:
+        rc, out, _ = await _run("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device")
+        if rc != 0:
+            return WifiStatus(False, False, None)
+        return parse_device_status(out)
 
     async def saved_networks(self) -> list[str]:
         rc, out, _ = await _run("nmcli", "-t", "-f", "NAME,TYPE", "connection", "show")

@@ -118,6 +118,14 @@ def test_device_status_counts_a_cable_as_online():
     assert not parse_device_status("eth0:ethernet:unavailable:\nwlan0:wifi:disconnected:\n").online
 
 
+def test_real_and_simulated_wifi_offer_the_same_functions():
+    # the frame only exercises the simulated one on a PC; a gap here only shows up on the Pi
+    from photoframe.network import MockWifi, NmcliWifi
+    for name in ("status", "saved_networks", "scan", "connect"):
+        assert callable(getattr(NmcliWifi, name, None)), name
+        assert callable(getattr(MockWifi, name, None)), name
+
+
 def test_split_terse():
     assert split_terse(r"*:My\:Net:80:WPA2") == ["*", "My:Net", "80", "WPA2"]
 
