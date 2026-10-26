@@ -493,6 +493,7 @@ const Wifi = {
 $('#wifi-close').addEventListener('click', () => Wifi.close(true));
 $('#wifi-rescan').addEventListener('click', () => Wifi.scan());
 $('#wifi-cancel').addEventListener('click', () => Wifi.showList());
+$('#wifi-connect').addEventListener('click', () => Wifi.connect($('#wifi-pass').value));
 $('#wifi-show').addEventListener('click', () => {
   const input = $('#wifi-pass');
   input.type = input.type === 'password' ? 'text' : 'password';

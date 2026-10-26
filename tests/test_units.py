@@ -5,7 +5,7 @@ from PIL import Image
 
 from photoframe.brightness import compute_target, night_active, wake_brightness
 from photoframe.config import Brightness, Config, Night
-from photoframe.network import split_terse
+from photoframe.network import parse_device_status, split_terse
 from photoframe.render import compose
 from photoframe.sync import next_daily, wanted_clip
 from photoframe.synology import _to_photo, _to_video, parse_share_url
@@ -105,6 +105,17 @@ def test_next_daily():
     now = datetime(2026, 10, 21, 12, 0)
     assert next_daily("03:00", now) == datetime(2026, 10, 22, 3, 0)
     assert next_daily("18:30", now) == datetime(2026, 10, 21, 18, 30)
+
+
+def test_device_status_counts_a_cable_as_online():
+    wired = ("eth0:ethernet:connected:Wired connection 1\nlo:loopback:connected (externally):lo\n"
+             "wlan0:wifi:disconnected:\n")
+    st = parse_device_status(wired)
+    assert st.online and st.ssid == "cable"
+    wifi = "eth0:ethernet:unavailable:\nwlan0:wifi:connected:Home\n"
+    st = parse_device_status(wifi)
+    assert st.online and st.ssid == "Home"
+    assert not parse_device_status("eth0:ethernet:unavailable:\nwlan0:wifi:disconnected:\n").online
 
 
 def test_split_terse():

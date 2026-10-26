@@ -45,12 +45,19 @@ class NmcliWifi:
         rc, out, _ = await _run("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device")
         if rc != 0:
             return WifiStatus(False, False, None)
-        rows = [split_terse(l) for l in out.splitlines() if l]
-        wifi = [r for r in rows if len(r) >= 4 and r[1] == "wifi"]
-        for r in wifi:
-            if r[2].startswith("connected") and not r[2].startswith("connected (site"):
-                return WifiStatus(True, True, r[3] or None)
-        return WifiStatus(bool(wifi), False, None)
+        return parse_device_status(out)
+
+
+def parse_device_status(out: str) -> WifiStatus:
+    """Online through Wi-Fi or a network cable (the Pi's Ethernet port works as a fallback)."""
+    rows = [r for r in (split_terse(l) for l in out.splitlines() if l) if len(r) >= 4]
+    connected = lambda r: r[2].startswith("connected") and not r[2].startswith("connected (site")  # noqa: E731
+    wifi = [r for r in rows if r[1] == "wifi"]
+    for r in wifi:
+        if connected(r):
+            return WifiStatus(True, True, r[3] or None)
+    wired = any(r[1] == "ethernet" and connected(r) for r in rows)
+    return WifiStatus(bool(wifi), wired, "cable" if wired else None)
 
     async def saved_networks(self) -> list[str]:
         rc, out, _ = await _run("nmcli", "-t", "-f", "NAME,TYPE", "connection", "show")
