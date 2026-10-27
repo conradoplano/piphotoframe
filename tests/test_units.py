@@ -78,10 +78,14 @@ def test_wanted_clip():
 
 def test_brightness_curve():
     b = Brightness(min_pct=10, max_pct=100, dark_lux=1, bright_lux=1000)
-    assert compute_target(b, 0) == 10
-    assert compute_target(b, 5000) == 100
-    assert compute_target(b, 31.62) == pytest.approx(55, abs=0.5)  # log midpoint
+    assert compute_target(b, 0) == pytest.approx(10)
+    assert compute_target(b, 5000) == pytest.approx(100)
+    # halfway (on a log scale) looks halfway bright, which needs less than half the backlight
+    assert compute_target(b, 31.62) == pytest.approx(42.2, abs=0.5)
     assert compute_target(b, None) == b.manual_pct
+    # the frame's real settings: a dim morning room (3.5 lux) gave 18% before, too bright
+    real = Brightness(min_pct=1, max_pct=94, dark_lux=1, bright_lux=800)
+    assert compute_target(real, 3.5) == pytest.approx(6.2, abs=0.5)
     assert compute_target(Brightness(auto=False, manual_pct=42), 500) == 42
 
 

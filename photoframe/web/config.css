@@ -16,8 +16,10 @@ body {
 .hidden { display: none !important; }
 
 .top { background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
-.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
-.top h1 { font-size: 18px; margin: 0; }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding-top: 8px; padding-bottom: 8px; }
+/* the title gives way (smaller, then onto two lines) so the badge and language menu always fit */
+.top h1 { font-size: 18px; margin: 0; min-width: 0; line-height: 1.2; }
+@media (max-width: 480px) { .top h1 { font-size: 16px; } }
 .pill { font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
 .pill.ok { color: var(--ok); border-color: currentColor; }
 .pill.bad { color: var(--bad); border-color: currentColor; }
@@ -48,6 +50,16 @@ button:disabled { opacity: .5; cursor: default; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
 .grid > label, label.block { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
 .hint { font-size: 12px; color: var(--muted); }
+.top-right { display: flex; align-items: center; gap: 8px; }
+select.lang { width: auto; padding: 4px 8px; font-size: 13px; border-radius: 99px; }
+/* a section's one-line explanation, right under its title */
+.lead { margin: -4px 0 12px; color: var(--muted); font-size: 14px; }
+/* numbered how-to steps (brightness calibration) */
+.step { margin: 14px 0 8px; font-size: 14px; }
+/* a column of related checkboxes */
+.checks { display: flex; flex-direction: column; gap: 8px; }
+.combo .unit { align-self: center; color: var(--muted); font-size: 13px; }
+details > summary { margin-bottom: 4px; }
 label.check { display: flex; align-items: center; gap: 8px; color: var(--fg); font-size: 14px; flex-direction: row; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 output { color: var(--fg); font-weight: 600; }

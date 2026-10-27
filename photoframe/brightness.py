@@ -18,10 +18,19 @@ log = logging.getLogger(__name__)
 
 INTERVAL = 0.5
 WAKE_SECONDS = 60
+# The backlight's light output is proportional to its level, but eyes are not: 20% backlight
+# looks about half as bright as 100%. Interpolating "how bright it looks" and converting back
+# with this exponent keeps a dim room's screen properly dim.
+PERCEPTUAL_GAMMA = 2.2
 
 
 def compute_target(b: Brightness, lux: float | None) -> float:
-    """Screen brightness in percent. Follows lux on a log scale, which matches how eyes perceive it."""
+    """Screen brightness (backlight percent) for a room brightness in lux.
+
+    The room's position between the dark and bright references is taken on a log scale (as eyes
+    judge a room); the screen then gets the same position between its darkest and brightest
+    setting in perceived brightness, not in raw backlight level.
+    """
     if not b.auto or lux is None:
         return float(b.manual_pct)
     lo, hi = sorted((b.min_pct, b.max_pct))
@@ -33,7 +42,8 @@ def compute_target(b: Brightness, lux: float | None) -> float:
         f = 1.0
     else:
         f = math.log(lux / dark) / math.log(bright / dark)
-    return lo + (hi - lo) * f
+    p_lo, p_hi = (lo / 100) ** (1 / PERCEPTUAL_GAMMA), (hi / 100) ** (1 / PERCEPTUAL_GAMMA)
+    return 100 * (p_lo + (p_hi - p_lo) * f) ** PERCEPTUAL_GAMMA
 
 
 def wake_brightness(b: Brightness) -> float:

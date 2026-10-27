@@ -38,7 +38,7 @@ function toast(text) {
 function changed() {
   const dirty = JSON.stringify(cfg) !== JSON.stringify(saved);
   $('#savebar').classList.toggle('hidden', !dirty);
-  $('#save-msg').textContent = 'Unsaved changes';
+  $('#save-msg').textContent = t('unsaved');
   $('#save-msg').className = '';
 }
 
@@ -85,19 +85,18 @@ function bindFields() {
 
 function albumStatus(url) {
   const st = state && state.albums && state.albums[url];
-  if (!st) return ['Not synced yet', ''];
+  if (!st) return [t('notChecked'), ''];
   if (st.ok) return [mediaSummary(st), 'ok'];
-  return [st.error || 'Error', 'bad'];
+  return [st.error || t('error'), 'bad'];
 }
 
-// "10 photos · 3 videos (1 more not used)"
+// "10 photos · 3 videos (1 more not used: too long)"
 function mediaSummary(r) {
-  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-  let text = plural(r.count, 'photo');
-  if (r.videos) text += ` · ${plural(r.videos, 'video')}`;
+  let text = t('photos', { n: r.count });
+  if (r.videos) text += ` · ${t('videos', { n: r.videos })}`;
   if (r.videos_unused) {
-    text += ` (${r.videos ? `${r.videos_unused} more` : plural(r.videos_unused, 'video')} not used: ` +
-      (cfg.clips_enabled ? 'too long' : 'videos are turned off') + ')';
+    const what = r.videos ? t('moreVideos', { n: r.videos_unused }) : t('videos', { n: r.videos_unused });
+    text += ` (${t('notUsed', { what, why: cfg.clips_enabled ? t('tooLong') : t('videosOff') })})`;
   }
   return text;
 }
@@ -106,7 +105,7 @@ function renderAlbums() {
   const box = $('#albums');
   box.innerHTML = '';
   if (!cfg.albums.length) {
-    box.innerHTML = '<p class="note">No albums yet.</p>';
+    box.innerHTML = `<p class="note">${esc(t('noAlbums'))}</p>`;
     return;
   }
   cfg.albums.forEach((album, i) => {
@@ -143,11 +142,12 @@ function renderAlbums() {
     $('.a-test', node).addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       btn.disabled = true;
-      status.textContent = 'Testing…';
+      status.dataset.manual = '1'; // keep the test result; the status refresh leaves it alone
+      status.textContent = t('testing');
       status.className = 'a-status note';
       try {
         const r = await post('/api/albums/test', { url: album.url, password: album.password });
-        status.textContent = r.ok ? `OK — ${mediaSummary(r)} found` : r.error;
+        status.textContent = r.ok ? t('testOk', { summary: mediaSummary(r) }) : r.error;
         status.className = `a-status note ${r.ok ? 'ok' : 'bad'}`;
       } catch (err) {
         status.textContent = err.message;
@@ -163,8 +163,8 @@ function renderAlbums() {
 $('#album-add').addEventListener('submit', (e) => {
   e.preventDefault();
   const url = $('#album-url').value.trim();
-  if (!/\/sharing\/[^/]+/.test(url)) { toast('That does not look like a Synology share link'); return; }
-  if (cfg.albums.some((a) => a.url === url)) { toast('Album already added'); return; }
+  if (!/\/sharing\/[^/]+/.test(url)) { toast(t('notShareLink')); return; }
+  if (cfg.albums.some((a) => a.url === url)) { toast(t('albumTwice')); return; }
   cfg.albums.push({ url, name: '', password: '', enabled: true });
   $('#album-url').value = '';
   renderAlbums();
@@ -177,9 +177,9 @@ function renderCities() {
   const list = $('#cities');
   list.innerHTML = cfg.cities.map((c, i) => `<li>
       <span class="name">${esc(c.name)}<small>${esc([c.country, c.timezone].filter(Boolean).join(' · '))}</small></span>
-      <button type="button" data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
-      <button type="button" data-del="${i}" aria-label="Remove">✕</button>
-    </li>`).join('') || '<li class="note">No city yet — the frame shows its own local time.</li>';
+      <button type="button" data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="${esc(t('moveUp'))}">↑</button>
+      <button type="button" data-del="${i}" aria-label="${esc(t('remove'))}">✕</button>
+    </li>`).join('') || `<li class="note">${esc(t('noCity'))}</li>`;
   $$('[data-up]', list).forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.up);
     [cfg.cities[i - 1], cfg.cities[i]] = [cfg.cities[i], cfg.cities[i - 1]];
@@ -192,7 +192,7 @@ function renderCities() {
     changed();
   }));
   $('#city-q').disabled = cfg.cities.length >= 3;
-  $('#city-q').placeholder = cfg.cities.length >= 3 ? 'Maximum of 3 cities' : 'Add a city…';
+  $('#city-q').placeholder = cfg.cities.length >= 3 ? t('maxCities') : t('addCity');
 }
 
 let searchTimer = null, searchSeq = 0;
@@ -208,7 +208,7 @@ $('#city-q').addEventListener('input', () => {
     const ul = $('#city-results');
     ul.innerHTML = results.map((r, i) =>
       `<li data-i="${i}">${esc(r.name)} <small>${esc([r.region, r.country].filter(Boolean).join(', '))}</small></li>`
-    ).join('') || '<li class="note">No match</li>';
+    ).join('') || `<li class="note">${esc(t('noCityFound'))}</li>`;
     ul.classList.remove('hidden');
     $$('li[data-i]', ul).forEach((li) => li.addEventListener('click', () => {
       const r = results[li.dataset.i];
@@ -227,11 +227,11 @@ document.addEventListener('click', (e) => {
 /* ---------- status ---------- */
 
 function ago(ts) {
-  if (!ts) return 'never';
+  if (!ts) return t('never');
   const s = Math.round(Date.now() / 1000 - ts);
-  if (s < 90) return 'just now';
-  if (s < 5400) return `${Math.round(s / 60)} min ago`;
-  if (s < 129600) return `${Math.round(s / 3600)} h ago`;
+  if (s < 90) return t('justNow');
+  if (s < 5400) return t('minAgo', { n: Math.round(s / 60) });
+  if (s < 129600) return t('hoursAgo', { n: Math.round(s / 3600) });
   return new Date(ts * 1000).toLocaleDateString();
 }
 
@@ -239,39 +239,45 @@ async function refreshState() {
   try {
     state = await api('/api/state');
   } catch {
-    $('#conn').textContent = 'Frame unreachable';
+    $('#conn').textContent = t('unreachable');
     $('#conn').className = 'pill bad';
     return;
   }
   const conn = $('#conn');
-  conn.textContent = state.online ? `Online${state.ssid ? ' · ' + state.ssid : ''}` : 'Offline';
+  conn.textContent = !state.online ? t('noNetwork')
+    : state.ssid === 'cable' ? t('onlineCable')
+      : state.ssid ? t('onlineWifi', { ssid: state.ssid }) : t('online');
   conn.className = 'pill ' + (state.online ? 'ok' : 'bad');
-  $('#st-photos').textContent = state.photo_count + (state.clip_count ? ` + ${state.clip_count} videos` : '');
+  $('#st-photos').textContent = t('photos', { n: state.photo_count }) +
+    (state.clip_count ? ` · ${t('videos', { n: state.clip_count })}` : '');
   $('#clip-count').textContent = state.clip_count
-    ? `${state.clip_count} video${state.clip_count > 1 ? 's' : ''} ready.` : 'No videos found in the albums yet.';
+    ? t('clipsReady', { videos: t('videos', { n: state.clip_count }) }) : t('noClips');
   $('#st-last').textContent = ago(state.sync.last_sync);
   $('#st-next').textContent = state.sync.next_run
-    ? new Date(state.sync.next_run * 1000).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '–';
-  $('#st-lux').textContent = state.sensor ? `${state.lux ?? '–'} lux` : 'no sensor';
-  $('#st-screen').textContent = state.screen_on ? `${Math.round(state.brightness)}%` : 'off';
-  $('#bri-now').textContent = !state.sensor
-    ? 'No light sensor found, so the screen uses the fixed brightness.'
-    : `Right now: the room measures ${state.lux ?? '–'} lux, so the screen is ` +
-      (state.screen_on ? `at ${Math.round(state.brightness)}%.` : 'off.');
+    ? new Date(state.sync.next_run * 1000).toLocaleString(LANG, { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : '–';
+  const now = state.sensor && state.lux !== null ? ` (${state.lux} lux)` : '';
+  $('#cal-dark').textContent = t('darkNow') + now;
+  $('#cal-bright').textContent = t('brightNow') + now;
+  $('#bri-now').textContent = !state.sensor ? t('noSensor')
+    : state.screen_on ? t('roomNowOn', { lux: state.lux ?? '–', pct: Math.round(state.brightness) })
+      : t('roomNowOff', { lux: state.lux ?? '–' });
   $('#st-url').textContent = state.url;
   const sync = state.sync;
   const line = $('#st-sync');
-  line.textContent = sync.running ? (sync.progress || 'Syncing…') : (sync.last_error ? 'Last sync problem: ' + sync.last_error : '');
+  line.textContent = sync.running ? (tServer(sync.progress) || t('fetching'))
+    : (sync.last_error ? t('syncProblem', { error: tServer(sync.last_error) }) : '');
   line.className = 'note' + (!sync.running && sync.last_error ? ' bad' : '');
   $('#sync-now').disabled = sync.running;
-  $('#sys-info').textContent = `Version ${state.version}${state.build ? ' (' + state.build + ')' : ''} · ${state.hostname} · light sensor: ${state.sensor || 'none'}` +
-    ` · backlight: ${state.backlight}${state.mock ? ' · simulated hardware' : ''}`;
+  $('#sys-info').textContent = t('sysInfo', {
+    version: state.version + (state.build ? ` (${state.build})` : ''), host: state.hostname,
+    sensor: state.sensor || t('none'), backlight: state.backlight,
+  }) + (state.mock ? t('simulated') : '');
   if (!document.activeElement || !document.activeElement.closest('#albums')) {
     $$('.album').forEach((node, i) => {
       const a = cfg.albums[i];
       if (!a) return;
       const el = $('.a-status', node);
-      if (el.textContent === 'Testing…' || el.textContent.startsWith('OK —')) return;
+      if (el.dataset.manual) return; // showing a Test result
       const [text, cls] = albumStatus(a.url);
       el.textContent = text;
       el.className = `a-status note ${cls}`;
@@ -279,28 +285,51 @@ async function refreshState() {
   }
 }
 
+/* ---------- brightness calibration: use the current sensor reading as "dark" or "bright" ---------- */
+
+function calibrate(which) {
+  const lux = state && state.sensor ? state.lux : null;
+  if (lux === null || lux === undefined) { toast(t('noReading')); return; }
+  const b = cfg.brightness;
+  const value = Math.max(0.1, Math.round(lux * 10) / 10);
+  if (which === 'dark') {
+    b.dark_lux = value;
+    if (b.bright_lux < value * 3) b.bright_lux = Math.round(value * 30);
+  } else {
+    if (value < b.dark_lux * 3) {
+      toast(t('notBrighter', { value, dark: b.dark_lux }));
+      return;
+    }
+    b.bright_lux = Math.round(value);
+  }
+  renderFields();
+  changed();
+  toast(which === 'dark' ? t('darkSet', { value: b.dark_lux }) : t('brightSet', { value: b.bright_lux }));
+}
+$('#cal-dark').addEventListener('click', () => calibrate('dark'));
+$('#cal-bright').addEventListener('click', () => calibrate('bright'));
+
 $('#sync-now').addEventListener('click', async () => {
   try {
     if (JSON.stringify(cfg) !== JSON.stringify(saved)) await save();
     await post('/api/sync');
-    toast('Sync started');
+    toast(t('fetching'));
     setTimeout(refreshState, 800);
   } catch (e) { toast(e.message); }
 });
 
 $('#shutdown').addEventListener('click', async () => {
-  if (!confirm('Shut down the photo frame?\n\nWait until the screen is dark and the green light on the Pi ' +
-    'stops blinking before unplugging it. To turn it on again, unplug the power and plug it back in.')) return;
+  if (!confirm(t('shutdownConfirm'))) return;
   try {
-    toast((await post('/api/system/shutdown')).message);
-    $('#conn').textContent = 'Shutting down';
+    toast(tServer((await post('/api/system/shutdown')).message));
+    $('#conn').textContent = t('shuttingDown');
     $('#conn').className = 'pill bad';
   } catch (e) { toast(e.message); }
 });
 
 $('#reboot').addEventListener('click', async () => {
-  if (!confirm('Restart the photo frame now?')) return;
-  try { toast((await post('/api/system/reboot')).message); } catch (e) { toast(e.message); }
+  if (!confirm(t('restartConfirm'))) return;
+  try { toast(tServer((await post('/api/system/reboot')).message)); } catch (e) { toast(e.message); }
 });
 
 /* ---------- software update ---------- */
@@ -313,26 +342,26 @@ function renderUpdate(u) {
   install.classList.add('hidden');
   msg.className = 'note';
   if (!u.available) {
-    msg.textContent = u.error || 'Updates are not available (not installed from git).';
+    msg.textContent = tServer(u.error) || t('updNotAvailable');
   } else if (u.running) {
-    msg.textContent = u.log.length ? u.log[u.log.length - 1] : 'Updating…';
+    msg.textContent = u.log.length ? tServer(u.log[u.log.length - 1]) : t('updating');
   } else if (u.error) {
-    msg.textContent = u.error;
+    msg.textContent = tServer(u.error);
     msg.className = 'note bad';
   } else if (!u.checked) {
-    msg.textContent = `Installed version: ${u.build}. Check GitHub for a newer one.`;
+    msg.textContent = t('updInstalled', { build: u.build });
   } else if (!u.behind) {
-    msg.textContent = `Up to date (${u.build}).`;
+    msg.textContent = t('updLatest', { build: u.build });
     msg.className = 'note ok';
   } else {
-    msg.textContent = `${u.behind} new change${u.behind > 1 ? 's' : ''} available (${u.build} → ${u.latest}):`;
+    msg.textContent = t('updAvailable', { n: u.behind });
     list.innerHTML = u.commits.map((c) => {
       const [hash, ...rest] = c.split(' ');
       return `<li><code>${esc(hash)}</code>${esc(rest.join(' '))}</li>`;
     }).join('');
     list.classList.remove('hidden');
     install.classList.toggle('hidden', !u.can_install);
-    if (!u.can_install) msg.textContent += ' (install on the frame itself — not in dev mode)';
+    if (!u.can_install) msg.textContent += t('updDevMode');
   }
   $('#upd-check').disabled = u.running;
   install.disabled = u.running;
@@ -341,14 +370,14 @@ function renderUpdate(u) {
 $('#upd-check').addEventListener('click', async () => {
   const btn = $('#upd-check');
   btn.disabled = true;
-  $('#upd-msg').textContent = 'Checking…';
+  $('#upd-msg').textContent = t('checking');
   $('#upd-msg').className = 'note';
   try { renderUpdate(await post('/api/update/check')); } catch (e) { toast(e.message); }
   btn.disabled = false;
 });
 
 $('#upd-install').addEventListener('click', async () => {
-  if (!confirm('Install the update now? The frame restarts and is back in about a minute.')) return;
+  if (!confirm(t('installConfirm'))) return;
   const before = state && state.build;
   try { renderUpdate(await post('/api/update/install')); } catch (e) { toast(e.message); return; }
   const started = Date.now();
@@ -357,7 +386,7 @@ $('#upd-install').addEventListener('click', async () => {
       const st = await api('/api/state');
       if (st.build && st.build !== before) {
         clearInterval(timer);
-        toast(`Updated to ${st.build}`);
+        toast(t('updatedTo', { build: st.build }));
         setTimeout(() => location.reload(), 1200);
         return;
       }
@@ -365,11 +394,11 @@ $('#upd-install').addEventListener('click', async () => {
       renderUpdate(u);
       if (!u.running && u.error) clearInterval(timer);
     } catch {
-      $('#upd-msg').textContent = 'Restarting…';
+      $('#upd-msg').textContent = t('restarting');
     }
     if (Date.now() - started > 5 * 60 * 1000) {
       clearInterval(timer);
-      $('#upd-msg').textContent = 'The update is taking long — reload this page in a moment.';
+      $('#upd-msg').textContent = t('updSlow');
     }
   }, 2000);
 });
@@ -384,7 +413,7 @@ async function save() {
     cfg = structuredClone(saved);
     renderAll();
     changed();
-    toast('Saved');
+    toast(t('saved'));
   } catch (e) {
     $('#save-msg').textContent = e.message;
     $('#save-msg').className = 'bad';

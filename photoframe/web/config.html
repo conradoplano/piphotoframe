@@ -4,131 +4,149 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Photo frame settings</title>
+  <title>Digital photo frame · Settings</title>
   <link rel="stylesheet" href="/static/config.css">
 </head>
 <body>
+<!-- Texts carry data-i18n keys: i18n.js swaps in the Spanish ones for a Spanish browser. -->
 <header class="top">
   <div class="wrap">
-    <h1>Photo frame</h1>
-    <span id="conn" class="pill">…</span>
+    <h1 data-i18n="app">Digital photo frame</h1>
+    <div class="top-right">
+      <span id="conn" class="pill">…</span>
+      <select id="lang" class="lang" aria-label="Language of this page" data-i18n-aria-label="aria.lang">
+        <option value="" data-i18n="lang.auto">Automatic</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
   </div>
 </header>
 
 <main class="wrap">
-  <section class="card" id="status">
-    <h2>Status</h2>
+  <!-- ============ where the photos come from ============ -->
+  <section class="card">
+    <h2 data-i18n="albums.h">Photo albums</h2>
+    <p class="lead" data-i18n="albums.lead">The frame shows the photos (and short videos) of these Synology
+      Photos albums. It checks them for new photos once a day.</p>
     <dl class="stats">
-      <div><dt>Photos</dt><dd id="st-photos">–</dd></div>
-      <div><dt>Last sync</dt><dd id="st-last">–</dd></div>
-      <div><dt>Next sync</dt><dd id="st-next">–</dd></div>
-      <div><dt>Room light</dt><dd id="st-lux">–</dd></div>
-      <div><dt>Screen</dt><dd id="st-screen">–</dd></div>
-      <div><dt>Address</dt><dd id="st-url">–</dd></div>
+      <div><dt data-i18n="now.photos">In the slideshow</dt><dd id="st-photos">–</dd></div>
+      <div><dt data-i18n="now.last">Photos last fetched</dt><dd id="st-last">–</dd></div>
+      <div><dt data-i18n="now.next">Next fetch</dt><dd id="st-next">–</dd></div>
     </dl>
     <p id="st-sync" class="note"></p>
     <div class="row-actions">
-      <button type="button" id="sync-now">Sync now</button>
+      <button type="button" id="sync-now" data-i18n="now.sync">Get new photos now</button>
     </div>
-  </section>
-
-  <section class="card">
-    <h2>Albums</h2>
-    <p class="note">Paste a Synology Photos share link (in Synology Photos: album → Share → enable the public link).</p>
+    <h3 data-i18n="albums.list">Albums</h3>
     <div id="albums"></div>
+    <p class="note" data-i18n="albums.how">To add an album: in Synology Photos open the album, choose
+      <b>Share</b>, turn on the public link, copy it and paste it here.</p>
     <form id="album-add" class="add-row">
-      <input id="album-url" type="url" placeholder="https://nas.example.com:5001/mo/sharing/AbC123" required>
-      <button type="submit">Add</button>
+      <input id="album-url" type="url" placeholder="Paste the album's share link" data-i18n-placeholder="ph.albumurl" required>
+      <button type="submit" data-i18n="albums.add">Add</button>
     </form>
-  </section>
-
-  <section class="card">
-    <h2>Slideshow</h2>
     <div class="grid">
-      <label>Screen orientation
-        <select data-path="orientation">
-          <option value="portrait">Portrait (upright)</option>
-          <option value="landscape">Landscape</option>
-          <option value="landscape_flipped">Landscape, turned the other way</option>
-        </select>
-        <span class="hint">After turning the frame on its side, pick the landscape option in which
-          the picture is upright.</span>
-      </label>
-      <label>Show each photo for
-        <span class="combo">
-          <input id="dur-value" type="number" min="1" step="1">
-          <select id="dur-unit">
-            <option value="1">seconds</option>
-            <option value="60">minutes</option>
-            <option value="3600">hours</option>
-          </select>
-        </span>
-      </label>
-      <label>Order
-        <select data-path="order">
-          <option value="shuffle">Shuffle</option>
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-        </select>
-      </label>
-      <label>Photos that don't fill the screen
-        <select data-path="fit_mode">
-          <option value="blur">Fit, blurred background</option>
-          <option value="cover">Crop to fill</option>
-          <option value="contain">Fit, black bars</option>
-        </select>
-      </label>
-      <label>Transition
-        <select data-path="transition">
-          <option value="fade">Cross-fade</option>
-          <option value="none">None</option>
-        </select>
-      </label>
-      <label>Daily album sync at
+      <label><span data-i18n="albums.synctime">Check the albums for new photos every day at</span>
         <input type="time" data-path="sync_time">
       </label>
     </div>
-    <h3>Short videos</h3>
-    <p class="note">Videos in your albums are not shown like photos. Instead, when someone swipes
-      to the next photo, the frame first plays one of them (muted), then shows the next photo. Swiping
-      again during a video skips it. Optionally, videos also play between photos in the normal
-      slideshow. Videos longer than one minute are always ignored.
-      <span id="clip-count"></span></p>
-    <label class="check"><input type="checkbox" data-path="clips_enabled"> Play a short video when swiping to the next photo</label>
-    <label class="check"><input type="checkbox" data-path="clips_in_slideshow"> Also play videos between photos in the slideshow</label>
+    <details>
+      <summary data-i18n="albums.nas">Connection to the NAS</summary>
+      <label class="check"><input type="checkbox" data-path="verify_tls"> <span data-i18n="albums.tls">Check the NAS's security certificate</span></label>
+      <p class="note" data-i18n="albums.tlsnote">Leave this on. Turn it off only if your share links use the
+        NAS's local address (like https://192.168.1.10:5001/…) and adding an album fails with a certificate error.</p>
+    </details>
+  </section>
+
+  <!-- ============ how photos are shown ============ -->
+  <section class="card">
+    <h2 data-i18n="show.h">Slideshow</h2>
     <div class="grid">
-      <label>Play each video for at most (seconds)
-        <input type="number" min="3" max="60" step="1" data-path="clip_max_seconds">
+      <label><span data-i18n="show.duration">Show each photo for</span>
+        <span class="combo">
+          <input id="dur-value" type="number" min="1" step="1">
+          <select id="dur-unit">
+            <option value="1" data-i18n="unit.seconds">seconds</option>
+            <option value="60" data-i18n="unit.minutes">minutes</option>
+            <option value="3600" data-i18n="unit.hours">hours</option>
+          </select>
+        </span>
       </label>
-      <label>Videos longer than that
-        <select data-path="clip_long">
-          <option value="trim">Play only the beginning</option>
-          <option value="skip">Don't use them</option>
+      <label><span data-i18n="show.order">Order</span>
+        <select data-path="order">
+          <option value="shuffle" data-i18n="show.random">Random</option>
+          <option value="newest" data-i18n="show.newest">Newest first</option>
+          <option value="oldest" data-i18n="show.oldest">Oldest first</option>
         </select>
       </label>
-      <label>At most one video every (seconds, swipes and slideshow together)
-        <input type="number" min="0" max="3600" step="5" data-path="clip_pause_seconds">
+      <label><span data-i18n="show.fit">Photos with a different shape than the screen</span>
+        <select data-path="fit_mode">
+          <option value="blur" data-i18n="show.blur">Whole photo, blurred edges</option>
+          <option value="cover" data-i18n="show.cover">Fill the screen, crop edges</option>
+          <option value="contain" data-i18n="show.contain">Whole photo, black edges</option>
+        </select>
+      </label>
+      <label><span data-i18n="show.trans">Change from one photo to the next</span>
+        <select data-path="transition">
+          <option value="fade" data-i18n="show.fade">With a soft fade</option>
+          <option value="none" data-i18n="show.instant">Instantly</option>
+        </select>
       </label>
     </div>
   </section>
 
+  <!-- ============ videos ============ -->
   <section class="card">
-    <h2>Clock &amp; weather</h2>
-    <p class="note">Add one city for a single clock, or up to three. The first city is the main one:
-      shown large, with the date and forecast. Use ↑ to change which city is first.</p>
-    <ol id="cities"></ol>
-    <div class="search">
-      <input id="city-q" type="search" placeholder="Add a city…" autocomplete="off">
-      <ul id="city-results" class="hidden"></ul>
-    </div>
+    <h2 data-i18n="vid.h">Short videos</h2>
+    <p class="lead"><span data-i18n="vid.lead">Videos in your albums are not part of the slideshow. When
+      someone swipes to the next photo, the frame first plays a short video (without sound), then shows
+      the next photo. Swiping again skips the video.</span> <span id="clip-count"></span></p>
+    <label class="check"><input type="checkbox" data-path="clips_enabled"> <span data-i18n="vid.on">Play a video when someone swipes to the next photo</span></label>
+    <label class="check"><input type="checkbox" data-path="clips_in_slideshow"> <span data-i18n="vid.slideshow">Also play videos between photos in the slideshow</span></label>
     <div class="grid">
-      <label>Temperature
-        <select data-path="units">
-          <option value="C">°C</option>
-          <option value="F">°F</option>
+      <label><span data-i18n="vid.pause">Wait at least this long between two videos</span>
+        <span class="combo"><input type="number" min="0" max="3600" step="5" data-path="clip_pause_seconds"><span class="unit" data-i18n="unit.seconds">seconds</span></span>
+      </label>
+      <label><span data-i18n="vid.max">Play each video for at most</span>
+        <span class="combo"><input type="number" min="3" max="60" step="1" data-path="clip_max_seconds"><span class="unit" data-i18n="unit.seconds">seconds</span></span>
+      </label>
+      <label><span data-i18n="vid.long">Longer videos</span>
+        <select data-path="clip_long">
+          <option value="trim" data-i18n="vid.trim">Play only their beginning</option>
+          <option value="skip" data-i18n="vid.skip">Don't use them</option>
         </select>
       </label>
-      <label>Language (dates)
+    </div>
+    <p class="note" data-i18n="vid.note">Videos longer than one minute are never used.</p>
+  </section>
+
+  <!-- ============ clock & weather ============ -->
+  <section class="card">
+    <h2 data-i18n="clock.h">Clock &amp; weather</h2>
+    <p class="lead" data-i18n="clock.lead">Add one city, or up to three to see the time and weather in
+      several places. The first city is the main one: it is shown large, with the date and forecast.
+      Use ↑ to choose which city comes first.</p>
+    <ol id="cities"></ol>
+    <div class="search">
+      <input id="city-q" type="search" placeholder="Add a city…" data-i18n-placeholder="ph.city" autocomplete="off">
+      <ul id="city-results" class="hidden"></ul>
+    </div>
+    <h3 data-i18n="clock.show">Show</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox" data-path="show_date"> <span data-i18n="clock.date">The date</span></label>
+      <label class="check"><input type="checkbox" data-path="show_main_city"> <span data-i18n="clock.maincity">The main city's name</span></label>
+      <label class="check"><input type="checkbox" data-path="show_forecast"> <span data-i18n="clock.forecast">The forecast for the next 3 days</span></label>
+      <label class="check"><input type="checkbox" data-path="clock_24h"> <span data-i18n="clock.24h">The time in 24-hour format (otherwise AM/PM)</span></label>
+    </div>
+    <div class="grid">
+      <label><span data-i18n="clock.units">Temperatures in</span>
+        <select data-path="units">
+          <option value="C">°C (Celsius)</option>
+          <option value="F">°F (Fahrenheit)</option>
+        </select>
+      </label>
+      <label><span data-i18n="clock.lang">Language of the date and weekdays</span>
         <select data-path="language">
           <option value="en">English</option>
           <option value="de">Deutsch</option>
@@ -139,79 +157,110 @@
           <option value="nl">Nederlands</option>
         </select>
       </label>
-      <label class="check"><input type="checkbox" data-path="clock_24h"> 24-hour clock</label>
-      <label class="check"><input type="checkbox" data-path="show_date"> Show date</label>
-      <label class="check"><input type="checkbox" data-path="show_forecast"> Show the next 3 days' forecast</label>
-      <label class="check"><input type="checkbox" data-path="show_main_city"> Show the main city's name</label>
     </div>
   </section>
 
+  <!-- ============ the screen itself ============ -->
   <section class="card">
-    <h2>Screen brightness</h2>
-    <p class="note">The light sensor measures how bright the room is (in lux) and the screen follows it
-      smoothly: in a dark room it uses the <b>Darkest room</b> brightness, in a bright room the
-      <b>Brightest room</b> brightness, and in between something in the middle. Change the two sliders
-      if the screen feels too bright at night or too dim during the day.</p>
-    <p class="note" id="bri-now"></p>
-    <label class="check"><input type="checkbox" data-path="brightness.auto"> Adjust to the room's light</label>
+    <h2 data-i18n="screen.h">Screen</h2>
     <div class="grid">
-      <label data-auto="1">Darkest room → <output data-for="brightness.min_pct"></output>
+      <label><span data-i18n="screen.orient">How the frame hangs</span>
+        <select data-path="orientation">
+          <option value="portrait" data-i18n="screen.portrait">Upright (portrait)</option>
+          <option value="landscape" data-i18n="screen.landscape">On its side (landscape)</option>
+          <option value="landscape_flipped" data-i18n="screen.flipped">On its other side (landscape)</option>
+        </select>
+        <span class="hint" data-i18n="screen.orienthint">On its side: pick the option in which the picture is the right way up.</span>
+      </label>
+    </div>
+
+    <h3 data-i18n="bri.h">Brightness</h3>
+    <p class="lead" data-i18n="bri.lead">A light sensor measures how bright the room is, and the screen
+      follows it: dim in a dark room, bright in a bright one.</p>
+    <p class="note" id="bri-now"></p>
+    <label class="check"><input type="checkbox" data-path="brightness.auto"> <span data-i18n="bri.auto">Adjust the brightness to the room</span></label>
+
+    <div data-auto="1">
+      <p class="step" data-i18n="bri.step1"><b>1. Show the frame what your room looks like.</b> The sensor
+        sees more or less light depending on where it is mounted. Tap <b>It's dark now</b> in the evening,
+        with the lights you usually have on, and <b>It's bright now</b> on a bright day. Tap Save after each.</p>
+      <div class="row-actions">
+        <button type="button" id="cal-dark">It's dark now</button>
+        <button type="button" id="cal-bright">It's bright now</button>
+      </div>
+      <p class="step" data-i18n="bri.step2"><b>2. Choose how bright the screen gets.</b> If it's still too
+        bright at night or too dim during the day, move these.</p>
+    </div>
+    <div class="grid">
+      <label data-auto="1"><span><span data-i18n="bri.dark">In a dark room</span> <output data-for="brightness.min_pct"></output></span>
         <input type="range" min="0" max="100" data-path="brightness.min_pct">
       </label>
-      <label data-auto="1">Brightest room → <output data-for="brightness.max_pct"></output>
+      <label data-auto="1"><span><span data-i18n="bri.bright">In a bright room</span> <output data-for="brightness.max_pct"></output></span>
         <input type="range" min="1" max="100" data-path="brightness.max_pct">
       </label>
-      <label data-auto="0">Fixed brightness <output data-for="brightness.manual_pct"></output>
+      <label data-auto="0"><span><span data-i18n="bri.fixed">Brightness</span> <output data-for="brightness.manual_pct"></output></span>
         <input type="range" min="1" max="100" data-path="brightness.manual_pct">
       </label>
     </div>
-    <details>
-      <summary>Advanced</summary>
-      <p class="note">For reference: a dark bedroom is under 1 lux, a living room in the evening about
-        50–150 lux, a bright room by day 300–1000 lux. Below the "dark" level the screen stays at
-        the darkest brightness, above the "bright" level at the brightest. Turning the screen off
-        below a level makes it go dark when the lights are off; a touch wakes it for a minute.</p>
+    <details data-auto="1">
+      <summary data-i18n="bri.more">More brightness options</summary>
+      <p class="note" data-i18n="bri.luxnote">Light is measured in lux. For comparison: a dark bedroom is
+        under 1 lux, a living room in the evening about 50–150, a bright room during the day 300–1000. The
+        two buttons above fill in the first two values for you.</p>
       <div class="grid">
-        <label>"Dark" means at most (lux)
+        <label><span data-i18n="bri.darklux">The room counts as dark at (lux)</span>
           <input type="number" min="0.1" step="0.1" data-path="brightness.dark_lux">
         </label>
-        <label>"Bright" means at least (lux)
+        <label><span data-i18n="bri.brightlux">The room counts as bright at (lux)</span>
           <input type="number" min="1" step="1" data-path="brightness.bright_lux">
         </label>
-        <label>Turn screen off below (lux, 0 = never)
+        <label><span data-i18n="bri.offlux">Turn the screen off when darker than (lux)</span>
           <input type="number" min="0" step="0.1" data-path="brightness.off_below_lux">
+          <span class="hint" data-i18n="bri.offhint">0 = never. A touch turns it back on for a minute.</span>
         </label>
       </div>
     </details>
-    <h3>Night</h3>
-    <label class="check"><input type="checkbox" data-path="night.enabled"> Turn the screen off at night (a touch wakes it for a minute)</label>
+
+    <h3 data-i18n="night.h">Night</h3>
+    <label class="check"><input type="checkbox" data-path="night.enabled"> <span data-i18n="night.on">Turn the screen off at night</span></label>
     <div class="grid">
-      <label>From <input type="time" data-path="night.start"></label>
-      <label>Until <input type="time" data-path="night.end"></label>
+      <label><span data-i18n="night.from">From</span> <input type="time" data-path="night.start"></label>
+      <label><span data-i18n="night.until">Until</span> <input type="time" data-path="night.end"></label>
     </div>
+    <p class="note" data-i18n="night.note">A touch turns the screen back on for a minute.</p>
   </section>
 
+  <!-- ============ maintenance ============ -->
   <section class="card">
-    <h2>System</h2>
-    <label class="check"><input type="checkbox" data-path="verify_tls"> Verify the NAS's HTTPS certificate</label>
-    <p class="note" id="sys-info"></p>
-    <h3>Software update</h3>
-    <p class="note" id="upd-msg">Check GitHub for a newer version of the frame software.</p>
+    <h2 data-i18n="sys.h">System</h2>
+    <p class="note"><span data-i18n="sys.url">To open these settings on another phone or computer, go to</span>
+      <b id="st-url">–</b></p>
+    <h3 data-i18n="sys.software">Software</h3>
+    <p class="note" id="upd-msg" data-i18n="sys.updmsg">Check whether a newer version of the frame software is available.</p>
     <ul id="upd-commits" class="commits hidden"></ul>
     <div class="row-actions">
-      <button type="button" id="upd-check">Check for updates</button>
-      <button type="button" id="upd-install" class="primary hidden">Install update</button>
-      <button type="button" id="reboot" class="danger">Restart frame</button>
-      <button type="button" id="shutdown" class="danger">Shut down</button>
+      <button type="button" id="upd-check" data-i18n="sys.check">Check for updates</button>
+      <button type="button" id="upd-install" class="primary hidden" data-i18n="sys.install">Install update</button>
     </div>
+    <h3 data-i18n="sys.power">Power</h3>
+    <p class="note" data-i18n="sys.powernote">To switch the frame off, use <b>Shut down</b> and wait until the
+      screen is dark before unplugging it. To switch it on again, plug it back in.</p>
+    <div class="row-actions">
+      <button type="button" id="reboot" data-i18n="sys.restart">Restart</button>
+      <button type="button" id="shutdown" class="danger" data-i18n="sys.shutdown">Shut down</button>
+    </div>
+    <details>
+      <summary data-i18n="sys.tech">Technical details</summary>
+      <p class="note" id="sys-info"></p>
+    </details>
   </section>
 </main>
 
 <footer class="savebar hidden" id="savebar">
   <div class="wrap">
-    <span id="save-msg">Unsaved changes</span>
-    <button type="button" id="revert" class="ghost">Discard</button>
-    <button type="button" id="save" class="primary">Save</button>
+    <span id="save-msg"></span>
+    <button type="button" id="revert" class="ghost" data-i18n="save.undo">Undo</button>
+    <button type="button" id="save" class="primary" data-i18n="save.save">Save</button>
   </div>
 </footer>
 <div id="toast" class="hidden"></div>
@@ -219,22 +268,23 @@
 <template id="album-tpl">
   <div class="album">
     <div class="album-head">
-      <input class="a-name" placeholder="Album name (optional)">
-      <label class="check"><input type="checkbox" class="a-enabled"> On</label>
+      <input class="a-name" placeholder="Name (optional, just for you)" data-i18n-placeholder="ph.albumname">
+      <label class="check" title="Include this album in the slideshow" data-i18n-title="tt.albumshow"><input type="checkbox" class="a-enabled"> <span data-i18n="album.show">Show</span></label>
     </div>
-    <input class="a-url" type="url" aria-label="Share link">
-    <input class="a-pass hidden" type="password" placeholder="Password (only for password-protected shares)" autocomplete="off">
+    <input class="a-url" type="url" aria-label="Share link" data-i18n-aria-label="aria.sharelink">
+    <input class="a-pass hidden" type="password" placeholder="Password, if the shared album has one" data-i18n-placeholder="ph.albumpass" autocomplete="off">
     <div class="album-foot">
       <p class="a-status note"></p>
       <div class="album-actions">
-        <button type="button" class="a-pass-toggle ghost small">Password</button>
-        <button type="button" class="a-test ghost small">Test</button>
-        <button type="button" class="a-del ghost small danger" aria-label="Remove album">Remove</button>
+        <button type="button" class="a-pass-toggle ghost small" data-i18n="album.password">Password</button>
+        <button type="button" class="a-test ghost small" data-i18n="album.test">Test</button>
+        <button type="button" class="a-del ghost small danger" aria-label="Remove album" data-i18n-aria-label="aria.removealbum" data-i18n="album.remove">Remove</button>
       </div>
     </div>
   </div>
 </template>
 
+<script src="/static/i18n.js"></script>
 <script src="/static/config.js"></script>
 </body>
 </html>

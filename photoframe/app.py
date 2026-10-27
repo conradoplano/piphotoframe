@@ -114,7 +114,7 @@ def create_app(settings: Settings) -> FastAPI:
             t.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
 
-    app = FastAPI(title="Photo frame", version=__version__, lifespan=lifespan)
+    app = FastAPI(title="Digital photo frame", version=__version__, lifespan=lifespan)
 
     @app.middleware("http")
     async def no_stale_pages(request: Request, call_next):

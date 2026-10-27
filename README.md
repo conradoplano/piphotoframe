@@ -1,4 +1,4 @@
-# Photo frame
+# Digital photo frame
 
 A digital photo frame for a Raspberry Pi 4 with the Waveshare 10.1" DSI touch display (800×1280). It hangs in portrait or landscape: turn the frame and pick the orientation on the settings page (Slideshow → Screen orientation); the picture is rotated in software, so no restart or reinstall is needed.
 
