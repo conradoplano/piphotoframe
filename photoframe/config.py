@@ -56,9 +56,8 @@ class Night(BaseModel):
 
 class Config(BaseModel):
     albums: list[Album] = Field(default_factory=list)
-    # how the frame hangs: portrait, or landscape turned one way or the other (the picture is
-    # rotated in software, so the setting applies immediately)
-    orientation: Literal["portrait", "landscape", "landscape_flipped"] = "portrait"
+    # how the frame hangs (the picture is rotated in software, so the setting applies immediately)
+    orientation: Literal["portrait", "landscape"] = "portrait"
     slide_seconds: int = Field(30, ge=5, le=86400)
     order: Literal["shuffle", "newest", "oldest"] = "shuffle"
     fit_mode: Literal["blur", "cover", "contain"] = "blur"
@@ -80,6 +79,12 @@ class Config(BaseModel):
     brightness: Brightness = Field(default_factory=Brightness)
     night: Night = Field(default_factory=Night)
     verify_tls: bool = True
+
+    @field_validator("orientation", mode="before")
+    @classmethod
+    def _single_landscape(cls, v):
+        # earlier versions had a second landscape ("landscape_flipped"); keep such frames working
+        return "landscape" if v == "landscape_flipped" else v
 
     @model_validator(mode="after")
     def _unique_albums(self) -> "Config":

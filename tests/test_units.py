@@ -130,16 +130,16 @@ def test_real_and_simulated_wifi_offer_the_same_functions():
         assert callable(getattr(MockWifi, name, None)), name
 
 
-def test_swipe_down_orientation_cycle():
-    from photoframe.app import next_orientation_after
-    # landscape → portrait → other landscape → portrait → landscape …, a quarter turn each time
-    seq, last = ["landscape"], "landscape"
-    for _ in range(4):
-        nxt = next_orientation_after(seq[-1], last)
-        if nxt != "portrait":
-            last = nxt
-        seq.append(nxt)
-    assert seq == ["landscape", "portrait", "landscape_flipped", "portrait", "landscape"]
+def test_swipe_down_switches_orientation():
+    from photoframe.app import other_orientation
+    assert other_orientation("portrait") == "landscape"
+    assert other_orientation("landscape") == "portrait"
+
+
+def test_old_second_landscape_setting_still_loads():
+    # frames saved with the removed "landscape_flipped" keep their settings, now as landscape
+    cfg = Config.model_validate({"orientation": "landscape_flipped", "units": "F"})
+    assert cfg.orientation == "landscape" and cfg.units == "F"
 
 
 def test_split_terse():

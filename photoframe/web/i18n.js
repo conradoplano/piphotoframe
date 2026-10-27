@@ -93,8 +93,7 @@ const ES_HTML = {
   'screen.orient': 'Cómo cuelga el cuadro',
   'screen.portrait': 'Vertical',
   'screen.landscape': 'De lado (horizontal)',
-  'screen.flipped': 'Del otro lado (horizontal)',
-  'screen.orienthint': 'De lado: elige la opción en la que la imagen se ve derecha.',
+  'screen.orienthint': 'También puedes cambiarlo deslizando el dedo hacia abajo en el cuadro.',
   'bri.h': 'Brillo',
   'bri.lead': 'Un sensor de luz mide cuánta luz hay en la habitación y la pantalla se adapta: tenue en una ' +
     'habitación oscura, brillante en una luminosa.',

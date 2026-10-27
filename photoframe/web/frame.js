@@ -510,7 +510,6 @@ let touch = null, pressTimer = null;
 function toScreen(dx, dy) {
   const o = S.config && S.config.orientation;
   if (o === 'landscape') return [dy, -dx];         // picture turned a quarter clockwise
-  if (o === 'landscape_flipped') return [-dy, dx]; // picture turned a quarter anticlockwise
   return [dx, dy];
 }
 
@@ -553,8 +552,8 @@ document.addEventListener('pointerup', (e) => {
 /* ================= swipe down: rotate the picture ================= */
 
 const ORIENT_LABELS = {
-  en: { portrait: 'Portrait', landscape: 'Landscape', landscape_flipped: 'Landscape (other way)' },
-  es: { portrait: 'Vertical', landscape: 'Horizontal', landscape_flipped: 'Horizontal (al otro lado)' },
+  en: { portrait: 'Portrait', landscape: 'Landscape' },
+  es: { portrait: 'Vertical', landscape: 'Horizontal' },
 };
 
 async function rotate() {

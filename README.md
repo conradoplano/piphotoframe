@@ -7,7 +7,7 @@ A digital photo frame for a Raspberry Pi 4 with the Waveshare 10.1" DSI touch di
   - **one city**: large clock, date, current weather and an optional 3-day forecast
   - **two or three cities**: the first city as above, with the others smaller below it (local time and current weather each)
 - Swipe left or right to change photos. Long-press (about 1 second) to show a QR code that opens the settings page.
-- A long swipe down turns the picture a quarter (landscape → portrait → landscape the other way → portrait → landscape …), so after turning the frame you can fix the picture without the settings page.
+- A long swipe down switches between portrait and landscape, so after turning the frame you can fix the picture without the settings page.
 - Short videos in the albums are not shown like photos: swiping to the next photo first plays one of them (muted, at most one per minute by default), then shows the next photo. Optionally they also play between photos in the automatic slideshow.
 - Screen brightness follows the room light (BH1750 or VEML7700 sensor). The screen can turn off in a dark room or on a night schedule; a touch wakes it for a minute.
 - If no Wi-Fi is configured, the frame shows a network list and an on-screen keyboard. If the connection drops, the slideshow keeps running from the local cache until the next daily sync.
