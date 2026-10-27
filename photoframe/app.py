@@ -54,6 +54,14 @@ class DevWifi(BaseModel):
     forget: bool = False  # also drop saved networks, like a brand-new frame
 
 
+def next_orientation_after(orientation: str, last_landscape: str) -> str:
+    """Swipe-down order, a quarter turn every time: landscape → portrait → the other landscape →
+    portrait → landscape … From portrait it goes to the landscape it did not come from."""
+    if orientation != "portrait":
+        return "portrait"
+    return "landscape" if last_landscape == "landscape_flipped" else "landscape_flipped"
+
+
 async def _supervise(name: str, fn) -> None:
     while True:
         try:
@@ -90,7 +98,12 @@ def create_app(settings: Settings) -> FastAPI:
     netmon = NetworkMonitor(wifi, state, library)
     updater = Updater(can_restart=not settings.dev)
 
+    if store.config.orientation != "portrait":
+        state.last_landscape = store.config.orientation
+
     def on_config_change(old: Config, new: Config) -> None:
+        if new.orientation != "portrait":
+            state.last_landscape = new.orientation  # so swipe-down from portrait picks the other one
         clip_settings = lambda c: (c.clips_enabled, c.clip_long, c.clip_max_seconds)  # noqa: E731
         if [a.model_dump() for a in old.albums] != [a.model_dump() for a in new.albums] \
                 or old.verify_tls != new.verify_tls or clip_settings(old) != clip_settings(new):
@@ -267,6 +280,14 @@ def create_app(settings: Settings) -> FastAPI:
         return {"ok": True}
 
     # ---- screen & system --------------------------------------------------
+    @app.post("/api/orientation/next")
+    async def next_orientation():
+        """Swipe down on the frame: turn the picture a quarter to the next orientation."""
+        cfg = store.config
+        nxt = next_orientation_after(cfg.orientation, state.last_landscape)
+        store.update(cfg.model_copy(update={"orientation": nxt}))  # on_config_change tracks landscapes
+        return {"orientation": store.config.orientation}
+
     @app.post("/api/wake")
     async def wake():
         brightness.wake()

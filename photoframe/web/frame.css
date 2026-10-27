@@ -203,3 +203,10 @@ html[data-orient^="landscape"] .kb-key.enter { max-width: 30vw; }
 html[data-orient^="landscape"] .wifi-actions { padding-top: 2vw; }
 
 #blank { position: fixed; inset: 0; background: #000; }
+
+/* short confirmation in the middle of the picture, e.g. after swiping down to rotate */
+#frame-msg {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 2.5vw 6vw; border-radius: 99px; font-size: 4.5vw; font-weight: 500;
+  background: rgba(0, 0, 0, .6); text-shadow: none; pointer-events: none; white-space: nowrap;
+}

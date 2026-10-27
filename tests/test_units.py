@@ -130,6 +130,18 @@ def test_real_and_simulated_wifi_offer_the_same_functions():
         assert callable(getattr(MockWifi, name, None)), name
 
 
+def test_swipe_down_orientation_cycle():
+    from photoframe.app import next_orientation_after
+    # landscape → portrait → other landscape → portrait → landscape …, a quarter turn each time
+    seq, last = ["landscape"], "landscape"
+    for _ in range(4):
+        nxt = next_orientation_after(seq[-1], last)
+        if nxt != "portrait":
+            last = nxt
+        seq.append(nxt)
+    assert seq == ["landscape", "portrait", "landscape_flipped", "portrait", "landscape"]
+
+
 def test_split_terse():
     assert split_terse(r"*:My\:Net:80:WPA2") == ["*", "My:Net", "80", "WPA2"]
 

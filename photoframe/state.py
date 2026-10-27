@@ -21,3 +21,5 @@ class RuntimeState:
     brightness_pct: float = 100.0
     screen_on: bool = True
     wake_until: float = 0.0  # wall-clock time until which a touch keeps the screen on
+    # the landscape orientation used last; swipe-down from portrait goes to the other one
+    last_landscape: str = "landscape_flipped"

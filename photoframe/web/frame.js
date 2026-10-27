@@ -546,7 +546,35 @@ document.addEventListener('pointerup', (e) => {
   const [dx, dy] = toScreen(e.clientX - touch.x, e.clientY - touch.y);
   touch = null;
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) (dx < 0 ? swipeNext() : swipePrev());
+  // a long swipe down (a quarter of the picture's height) turns the picture to the next orientation
+  else if (!S.clip && dy > $('#screen').clientHeight * 0.25 && dy > Math.abs(dx) * 1.5) rotate();
 });
+
+/* ================= swipe down: rotate the picture ================= */
+
+const ORIENT_LABELS = {
+  en: { portrait: 'Portrait', landscape: 'Landscape', landscape_flipped: 'Landscape (other way)' },
+  es: { portrait: 'Vertical', landscape: 'Horizontal', landscape_flipped: 'Horizontal (al otro lado)' },
+};
+
+async function rotate() {
+  try {
+    const r = await post('/api/orientation/next');
+    S.config.orientation = r.orientation;
+    document.documentElement.dataset.orient = r.orientation; // turn now; photos follow on the next poll
+    const labels = ORIENT_LABELS[(S.config.language || '').startsWith('es') ? 'es' : 'en'];
+    flashMessage(labels[r.orientation] || r.orientation);
+  } catch { /* server busy or restarting: nothing happens, swipe again */ }
+}
+
+let msgTimer = null;
+function flashMessage(text) {
+  const el = $('#frame-msg');
+  el.textContent = text;
+  el.classList.remove('hidden');
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => el.classList.add('hidden'), 2000);
+}
 
 document.addEventListener('pointercancel', () => { touch = null; clearTimeout(pressTimer); });
 document.addEventListener('contextmenu', (e) => e.preventDefault());
