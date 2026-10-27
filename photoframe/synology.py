@@ -61,6 +61,17 @@ class SynoPhoto:
     taken: int
     width: int
     height: int
+    place: str = ""  # where it was taken, e.g. "Zurich, Switzerland" ("" when unknown)
+
+
+def place_name(address: dict | None) -> str:
+    """Short place name from the address Synology Photos derives from a photo's GPS position."""
+    if not address:
+        return ""
+    local = next((address[k] for k in ("city", "town", "village", "district", "county", "state")
+                  if address.get(k)), "")
+    country = address.get("country") or ""
+    return ", ".join(p for p in (local, country) if p)
 
 
 @dataclass
@@ -119,6 +130,7 @@ def _to_photo(item: dict) -> SynoPhoto | None:
         taken=int(item.get("time") or 0),
         width=int(res.get("width") or 0),
         height=int(res.get("height") or 0),
+        place=place_name(extra.get("address")),
     )
 
 
@@ -157,7 +169,7 @@ class SynologyShare:
             "sort_by": _q("takentime"), "sort_direction": _q("desc"),
             "passphrase": _q(self.ref.passphrase),
             "additional": json.dumps(["thumbnail", "resolution", "orientation",
-                                      "video_meta", "video_convert"]),
+                                      "video_meta", "video_convert", "address"]),
         }
 
     async def _connect(self) -> str:

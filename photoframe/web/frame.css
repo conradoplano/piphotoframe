@@ -50,6 +50,16 @@ body.clip #clip { opacity: 1; }
 #overlay, #offline { transition: opacity .6s ease; }
 body.clip #overlay, body.clip #offline { opacity: 0; }
 
+/* ---- where and when the photo was taken, small and grey in the top left ---- */
+#caption {
+  position: fixed; top: 3.5vw; left: 5vw; right: 14vw;
+  font-size: 2.6vw; color: rgba(255, 255, 255, .72); text-shadow: var(--shadow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+  transition: opacity .6s ease;
+}
+#caption.fading { opacity: 0; }
+body.clip #caption { opacity: 0; }
+
 /* ---- clock & weather overlay ---- */
 #overlay {
   position: fixed; left: 0; right: 0; bottom: 0;

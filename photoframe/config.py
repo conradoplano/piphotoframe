@@ -75,6 +75,7 @@ class Config(BaseModel):
     show_date: bool = True
     show_forecast: bool = True  # next three days under the (main) city's weather
     show_main_city: bool = True  # name of the main city under the date
+    show_caption: bool = True  # where and when each photo was taken, top left
     language: str = "en"
     brightness: Brightness = Field(default_factory=Brightness)
     night: Night = Field(default_factory=Night)

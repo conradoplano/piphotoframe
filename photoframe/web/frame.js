@@ -102,7 +102,46 @@ async function show(id, how) {
   }, ms + 50);
 
   S.front = inc; S.back = out; S.current = id;
+  updateCaption(photo);
   return true;
+}
+
+// Without a location the caption reads "Taken on <date>", in the frame's date language.
+const TAKEN_ON = {
+  en: 'Taken on {date}', es: 'Tomada el {date}', de: 'Aufgenommen am {date}', fr: 'Prise le {date}',
+  it: 'Scattata il {date}', pt: 'Tirada em {date}', nl: 'Genomen op {date}',
+};
+
+// "Zurich, Switzerland · 23 October 2025", or "Taken on 23 October 2025" when the location is unknown.
+function captionText(photo) {
+  if (!photo || !S.config || !S.config.show_caption) return '';
+  let date = '';
+  if (photo.taken) {
+    // Synology stores the camera's local time as if it were UTC, so format it in UTC as-is
+    const parts = formatter('UTC', { day: 'numeric', month: 'long', year: 'numeric' })
+      .formatToParts(new Date(photo.taken * 1000));
+    const lang = S.config.language || 'en';
+    date = parts.map((p) => (p.type === 'month' ? p.value.charAt(0).toLocaleUpperCase(lang) + p.value.slice(1)
+      : p.value)).join('');
+  }
+  if (!photo.place) {
+    if (!date) return '';
+    const lang = (S.config.language || 'en').slice(0, 2);
+    return (TAKEN_ON[lang] || TAKEN_ON.en).replace('{date}', date);
+  }
+  return [photo.place, date].filter(Boolean).join(' · ');
+}
+
+function updateCaption(photo) {
+  const el = $('#caption');
+  const text = captionText(photo);
+  if (text === el.textContent && !el.classList.contains('hidden')) return;
+  el.classList.add('fading');
+  setTimeout(() => {
+    el.textContent = text;
+    el.classList.toggle('hidden', !text);
+    el.classList.remove('fading');
+  }, 300);
 }
 
 async function loadPhotos() {
@@ -370,6 +409,7 @@ async function poll() {
       await loadPhotos();
       S.photosVersion = st.photos_version;
       if (S.current) schedule();
+      updateCaption(S.photos.get(S.current)); // the caption setting or date language may have changed
     } else if (st.photos_version !== S.photosVersion) {
       await loadPhotos();
       S.photosVersion = st.photos_version;

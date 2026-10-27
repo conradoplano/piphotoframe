@@ -54,6 +54,22 @@ def test_to_photo():
     assert _to_photo({**item, "additional": {"thumbnail": {"cache_key": "7_1", "xl": "broken", "m": "broken"}}}) is None
 
 
+def test_place_name():
+    from photoframe.synology import place_name
+    assert place_name({"country": "Switzerland", "state": "Zurich", "city": "Zürich", "route": "x"}) \
+        == "Zürich, Switzerland"
+    assert place_name({"country": "Spain", "village": "Cadaqués"}) == "Cadaqués, Spain"
+    assert place_name({"country": "Spain"}) == "Spain"
+    assert place_name({}) == "" and place_name(None) == ""
+
+
+def test_photo_keeps_its_place():
+    item = {"id": 7, "filename": "a.jpg", "time": 100, "type": "photo",
+            "additional": {"thumbnail": {"cache_key": "7_1", "unit_id": 7, "xl": "ready"},
+                           "address": {"city": "Madrid", "country": "Spain"}}}
+    assert _to_photo(item).place == "Madrid, Spain"
+
+
 def test_to_video():
     item = {"id": 9, "filename": "v.mp4", "time": 50, "type": "video",
             "additional": {"thumbnail": {"cache_key": "9_1", "unit_id": 9},

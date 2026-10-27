@@ -196,7 +196,8 @@ def create_app(settings: Settings) -> FastAPI:
             "order": cfg.order,
             "layout": layout,
             "items": [{"id": k, "url": f"/photos/{k}.jpg?fit={cfg.fit_mode}&layout={layout}"
-                                        f"&v={m['cache_key']}"}
+                                        f"&v={m['cache_key']}",
+                       "taken": m.get("taken") or 0, "place": m.get("place") or ""}
                       for k, m in library.ordered(cfg.order)],
             "clips": [{"id": k, "url": f"/clips/{k}.mp4?v={m['cache_key']}", "duration": m["duration"]}
                       for k, m in library.clips.items()] if cfg.clips_enabled else [],

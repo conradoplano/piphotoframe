@@ -169,7 +169,8 @@ class Syncer:
             for p in photos:
                 key = f"{akey}_{p.unit_id}"
                 wanted[key] = {"album": album.url, "unit_id": p.unit_id, "cache_key": p.cache_key,
-                               "size": p.size, "taken": p.taken, "filename": p.filename}
+                               "size": p.size, "taken": p.taken, "filename": p.filename,
+                               "place": p.place}
                 fetch.setdefault(album.url, []).append((key, p))
 
         if len(wanted) > MAX_PHOTOS:

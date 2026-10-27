@@ -86,6 +86,7 @@ const ES_HTML = {
   'clock.maincity': 'El nombre de la ciudad principal',
   'clock.forecast': 'La previsión de los próximos 3 días',
   'clock.24h': 'La hora en formato de 24 horas (si no, AM/PM)',
+  'clock.caption': 'Dónde y cuándo se hizo cada foto (arriba a la izquierda)',
   'clock.units': 'Temperaturas en',
   'clock.lang': 'Idioma de la fecha y los días de la semana',
   // screen
